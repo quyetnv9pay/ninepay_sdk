@@ -1,63 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 xmlns:tools="http://schemas.android.com/tools"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:id="@+id/rootView"
                 xmlns:app="http://schemas.android.com/apk/res-auto"
+                android:orientation="vertical"
                 tools:context=".module.NPayActivity">
 
-
-    <androidx.appcompat.widget.Toolbar
+        <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:visibility="gone"
             android:layout_height="?attr/actionBarSize"
             android:background="@android:color/white">
 
-        <View
+            <View
                 android:id="@+id/btnClose"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
                 android:background="@drawable/ic_close"
                 android:textAlignment="textStart"
-                android:textColor="#FFFFFF"/>
-    </androidx.appcompat.widget.Toolbar>
-
-
-    <LinearLayout
+                android:textColor="@android:color/black"/>
+        </androidx.appcompat.widget.Toolbar>
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="fill_parent"
-            android:layout_below="@+id/toolbar"
-            android:orientation="vertical"
-            tools:ignore="WebViewLayout">
+            android:layout_height="match_parent">
 
-        <com.google.android.material.progressindicator.LinearProgressIndicator
-                android:id="@+id/progressBar"
-                android:layout_centerVertical="true"
-                android:indeterminate="true"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@color/white"
-                app:trackThickness="04dp"
-                android:visibility="gone"/>
-
-        <WebView
+            <WebView
                 android:id="@+id/webView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:focusable="true"
                 android:focusableInTouchMode="true"
-                tools:ignore="WebViewLayout"/>
+                android:visibility="gone"
+                tools:ignore="WebViewLayout" />
 
-        <WebView
+            <WebView
                 android:id="@+id/webView2"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:focusable="true"
                 android:focusableInTouchMode="true"
-                android:visibility="gone"/>
+                android:visibility="gone" />
 
-    </LinearLayout>
+            <LinearLayout
+                android:id="@+id/progressLayout"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/white"
+                android:gravity="center"
+                android:orientation="vertical">
 
-</RelativeLayout>
+                <com.airbnb.lottie.LottieAnimationView
+                    android:id="@+id/animation_view"
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
+                    app:lottie_rawRes="@raw/msct_loading"
+                    app:lottie_loop="true"
+                    app:lottie_autoPlay="true"
+                    android:layout_marginBottom="10dp"
+                    />
+
+                <com.google.android.material.progressindicator.LinearProgressIndicator
+                    android:id="@+id/progressBar"
+                    android:layout_width="200dp"
+                    android:layout_height="wrap_content"
+                    android:visibility="visible"
+                    android:progress="40"
+                    app:indicatorColor="#4f44ff"
+                    app:trackColor="#78c2dc"
+                    app:trackCornerRadius="80dp"
+                    app:trackThickness="8dp" />
+            </LinearLayout>
+
+        </FrameLayout>
+</LinearLayout>

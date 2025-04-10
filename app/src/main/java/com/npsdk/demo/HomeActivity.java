@@ -43,10 +43,11 @@ public class HomeActivity extends AppCompatActivity {
 
         // Create flavor by package name test
         String flavorEnv = Flavor.setEnvTest(this);
-        String mcCode = "uymvnd";
-        String colorCode = "15AE62";
-        String secretKey = "vIPldW/y/VJuy8qKEQUoH9ypHTTt9W/8ufvn3BFFTBU="; // vIPldW/y/VJuy8qKEQUoH9ypHTTt9W/8ufvn3BFFTBU=
-        SdkConfig sdkConfig = new SdkConfig.Builder(this).merchantCode(mcCode).secretKey(secretKey).uid(null).env(flavorEnv).brandColor(colorCode).build();
+        String mcCode = "";
+        String colorCode = "";
+        String secretKey = "";
+        String phoneNumber = "";
+        SdkConfig sdkConfig = new SdkConfig.Builder(this).merchantCode(mcCode).secretKey(secretKey).uid(null).env(flavorEnv).brandColor(colorCode).phoneNumber(phoneNumber).build();
         initSdk(sdkConfig);
 
         binding.btnNinepay.setOnClickListener(v -> {
@@ -120,7 +121,6 @@ public class HomeActivity extends AppCompatActivity {
             public void sdkDidComplete(String name, Object status, @Nullable Object params) {
                 getUserInfo();
             }
-
         });
     }
 

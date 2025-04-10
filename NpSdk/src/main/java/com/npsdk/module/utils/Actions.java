@@ -13,6 +13,7 @@ public class Actions {
     public static final String WITHDRAW = "WITHDRAW";
     public static final String DEPOSIT = "DEPOSIT";
     public static final String QR = "QR";
+    public static final String LINK_WALLET = "LINK_WALLET";
 
     // DANH MUC HOA DON
     public static final String SHOP = "SHOP";
@@ -33,7 +34,7 @@ public class Actions {
     public static final String TOPUP = "TOPUP";
     public static final String PHONE_CARD = "PHONE_CARD";
     public static final String DATA_CARD = "DATA_CARD";
-    public static final String GAME = "GAME";
+    public static final String GAME_CARD = "GAME_CARD";
     public static final String SERVICE_CARD = "SERVICE_CARD";
 
 
@@ -45,7 +46,7 @@ public class Actions {
                 BILLING_INTERNET, BILLING_NUOC, BILLING_BAO_HIEM, BILLING_TAI_CHINH,
                 BILLING_TRA_SAU, BILLING_HOC_PHI,
                 BILLING_TRA_GOP, BILLING_VE_TAU_XE, BILLING_VETC, TOPUP,
-                DATA_CARD, PHONE_CARD, GAME, SERVICE_CARD));
+                DATA_CARD, PHONE_CARD, GAME_CARD, SERVICE_CARD));
         return listTemp;
     }
 

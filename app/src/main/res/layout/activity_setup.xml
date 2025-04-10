@@ -50,6 +50,19 @@
             android:hint="Secret key"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
+    <TextView
+        android:layout_marginTop="16dp"
+        android:textColor="@color/black"
+        android:text="Số điện thoại"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        />
+    <EditText
+        android:id="@+id/phoneNumber"
+        android:text="0987654321"
+        android:textColor="@color/black"
+        android:hint="Số điện thoại"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
     <Button
             android:id="@+id/btn_open_sdk"
             android:text="Go to SDK"
@@ -57,11 +70,15 @@
             android:layout_marginTop="16dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
         <TextView
-                android:text="Hiển thị màn hình kết quả"
-                android:textColor="@color/black"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+            android:text="Hiển thị màn hình kết quả"
+            android:textColor="@color/black"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
         <Switch
                 android:layout_marginLeft="12dp"
                 android:id="@+id/switchButton"

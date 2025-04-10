@@ -180,9 +180,9 @@ class InputCardActivity : ComponentActivity() {
                     )
                 }
 
-                item {
-                    SaveCardView(callBack = { isSaveToken = it })
-                }
+//                item {
+//                    SaveCardView(callBack = { isSaveToken = it })
+//                }
 
                 item {
                     if (inputViewModel.showNotification.value) {

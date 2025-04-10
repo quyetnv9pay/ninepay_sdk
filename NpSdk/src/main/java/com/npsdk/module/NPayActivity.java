@@ -19,9 +19,11 @@ import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.webkit.*;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 import android.window.OnBackInvokedDispatcher;
 import androidx.activity.OnBackPressedCallback;
+import androidx.activity.result.ActivityResultLauncher;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -31,8 +33,10 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
+import com.google.gson.Gson;
 import com.npsdk.NotificationCancelReceiver;
 import com.npsdk.R;
+import com.npsdk.module.model.HyperKycParams;
 import com.npsdk.module.utils.*;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -46,6 +50,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+//import co.hyperverge.hyperkyc.HyperKyc;
+//import co.hyperverge.hyperkyc.data.models.HyperKycConfig;
 
 public class NPayActivity extends AppCompatActivity {
     public static final String TAG = NPayActivity.class.getName();
@@ -61,6 +69,8 @@ public class NPayActivity extends AppCompatActivity {
     private JsHandler jsHandler;
     private ValueCallback<Uri[]> fileUploadCallback;
     private FileObserver fileObserver;
+    private LinearLayout linearLayout;
+    private boolean isRedirected;
 
     private static String getMimeType(String url) {
         String type = null;
@@ -92,10 +102,9 @@ public class NPayActivity extends AppCompatActivity {
             });
         }
 
+
         findView();
         // Set color progress bar webview loading
-        progressBar.getIndeterminateDrawable().setColorFilter(0xFF15AE62, PorterDuff.Mode.SRC_IN);
-        progressBar.getProgressDrawable().setColorFilter(0xFF15AE62, PorterDuff.Mode.SRC_IN);
         closeButtonWebview();
         jsHandler = new JsHandler(this);
         String data = getIntent().getStringExtra("data");
@@ -104,9 +113,12 @@ public class NPayActivity extends AppCompatActivity {
         IntentFilter filter = new IntentFilter();
         filter.addAction("webViewBroadcast");
         filter.addAction("nativeBroadcast");
+        filter.addAction("closeLoading");
+        filter.addAction("callEkyc");
         listentChangeUrlBroadcast();
 
         LocalBroadcastManager.getInstance(this).registerReceiver(changeUrlBR, filter);
+        linearLayout.setVisibility(View.VISIBLE);
 
         settingWebview(webView);
         settingWebview(webView2);
@@ -115,7 +127,7 @@ public class NPayActivity extends AppCompatActivity {
         setUpWeb2Client();
         setCookieRefreshToken();
 
-        screenshotDetecter();
+//        screenshotDetecter();
         downloadWebview(webView);
         downloadWebview(webView2);
 
@@ -137,6 +149,11 @@ public class NPayActivity extends AppCompatActivity {
                 webView.setVisibility(View.VISIBLE);
                 webView.loadUrl(Utils.getUrlActionShop(route), headerWebView);
                 System.out.println("Webview 1 load url " + Utils.getUrlActionShop(route));
+                showOrHideToolbar();
+            } else if (isValidEndpoint(route)) {
+                webView2.setVisibility(View.GONE);
+                webView.setVisibility(View.VISIBLE);
+                webView.loadUrl(Flavor.baseUrl + "/v1/" + route, headerWebView);
                 showOrHideToolbar();
             } else {
                 if (Actions.listActionSdk().contains(route)) {
@@ -164,6 +181,19 @@ public class NPayActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
+    }
+
+    public static boolean isValidEndpoint(String url) {
+        String expectedEndpoint = "payment";
+        Set<String> requiredParams = Set.of("order_id", "b_type", "b_info");
+
+        Uri uri = Uri.parse(url);
+
+        if (!expectedEndpoint.equals(uri.getPath())) {
+            return false;
+        }
+
+        return uri.getQueryParameterNames().containsAll(requiredParams);
     }
 
     private void screenshotDetecter() {
@@ -214,10 +244,10 @@ public class NPayActivity extends AppCompatActivity {
     }
 
     private void sendStatusScreenshot() {
-        String jsExcute = "javascript: window.sendStatusTakeScreenshot()";
+        String jsExecute = "javascript: window.sendStatusTakeScreenshot()";
         Handler mainHandler = new Handler(Looper.getMainLooper());
         Runnable myRunnable = () -> {
-            webView.loadUrl(jsExcute);
+            webView.loadUrl(jsExecute);
         };
         mainHandler.post(myRunnable);
     }
@@ -267,6 +297,10 @@ public class NPayActivity extends AppCompatActivity {
 
             @Override
             public void onPageFinished(WebView view, String url) {
+                if (!isRedirected) {
+                    linearLayout.setVisibility(View.GONE);
+                }
+                webView.setVisibility(View.VISIBLE);
                 CookieManager.getInstance().flush();
                 super.onPageFinished(view, url);
             }
@@ -275,6 +309,7 @@ public class NPayActivity extends AppCompatActivity {
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
 
                 String url = request.getUrl().toString();
+                isRedirected = true;
 
                 System.out.println("shouldOverrideUrlLoading 1: " + url);
 
@@ -307,6 +342,11 @@ public class NPayActivity extends AppCompatActivity {
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 showOrHideToolbar();
+                if(!isRedirected) {
+                    linearLayout.setVisibility(View.VISIBLE);
+                }
+
+                isRedirected = false;
                 super.onPageStarted(view, url, favicon);
             }
 
@@ -454,11 +494,12 @@ public class NPayActivity extends AppCompatActivity {
                     if (nameAction != null) {
                         isProgressDeposit = nameAction.equals("napas-deposit");
                     }
-                    if (!getURL.startsWith(Flavor.baseUrl) && !getURL.startsWith(Flavor.baseShop)) {
-                        webView.setVisibility(View.GONE);
-                        webView2.setVisibility(View.VISIBLE);
-                        webView2.loadUrl(getURL, headerWebView);
-                    }
+
+                    /// Remove validate by URL
+                    webView.setVisibility(View.GONE);
+                    webView2.setVisibility(View.VISIBLE);
+                    webView2.loadUrl(getURL, headerWebView);
+
                     showOrHideToolbar();
 
                 }
@@ -467,9 +508,35 @@ public class NPayActivity extends AppCompatActivity {
                         finish();
                     }
                 }
+                if (intent.getAction().equals("closeLoading")) {
+                    linearLayout.setVisibility(View.GONE);
+                }
+
+                if (intent.getAction().equals("callEkyc")) {
+//                    String jsonString = intent.getStringExtra("JSON_OBJECT");
+//                    HyperKycParams hvParam = KycUtil.createHyperKycParams(jsonString);
+//                    if (hvParam == null) {
+//                        System.out.println("Param null");
+//                        return;
+//                    }
+//                    KycUtil.startWorkflow( hyperKycLauncher,hvParam);
+                }
             }
         };
     }
+
+//    private final ActivityResultLauncher<HyperKycConfig> hyperKycLauncher =
+//            registerForActivityResult(new HyperKyc.Contract(), result -> {
+//                Gson gson = new Gson();
+//                String jsonStr = gson.toJson(result);
+//                String jsExecute = "javascript: window.pasteDataNFC('" + jsonStr + "')";
+//                Handler mainHandler = new Handler(Looper.getMainLooper());
+//                Runnable myRunnable = () -> {
+//                    if (NPayActivity.webView == null) return;
+//                    NPayActivity.webView.loadUrl(jsExecute);
+//                };
+//                mainHandler.post(myRunnable);
+//            });
 
     private void findView() {
         webView = findViewById(R.id.webView);
@@ -477,6 +544,7 @@ public class NPayActivity extends AppCompatActivity {
         toolbar = findViewById(R.id.toolbar);
         btnClose = findViewById(R.id.btnClose);
         progressBar = findViewById(R.id.progressBar);
+        linearLayout = findViewById(R.id.progressLayout);
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -514,12 +582,9 @@ public class NPayActivity extends AppCompatActivity {
 
             @Override
             public void onProgressChanged(WebView view, int newProgress) {
-                if (newProgress >= 95) {
-                    progressBar.setVisibility(View.GONE);
-                } else {
-                    progressBar.setVisibility(View.VISIBLE);
+
                     progressBar.setProgress(newProgress);
-                }
+
                 super.onProgressChanged(view, newProgress);
             }
         });
@@ -610,10 +675,6 @@ public class NPayActivity extends AppCompatActivity {
             fileUploadCallback.onReceiveValue(results);
             fileUploadCallback = null;
         }
-    }
-
-    @Override
-    public void onBackPressed() {
     }
 
     @Override

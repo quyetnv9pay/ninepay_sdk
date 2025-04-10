@@ -1,5 +1,6 @@
 package com.npsdk.jetpack_sdk
 
+import PasswordBottomSheet
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
@@ -9,21 +10,39 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Icon
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -41,14 +60,23 @@ import com.npsdk.jetpack_sdk.DataOrder.Companion.isStartScreen
 import com.npsdk.jetpack_sdk.DataOrder.Companion.userInfo
 import com.npsdk.jetpack_sdk.base.AppUtils
 import com.npsdk.jetpack_sdk.base.listener.CloseListener
-import com.npsdk.jetpack_sdk.base.view.*
-import com.npsdk.jetpack_sdk.repository.*
+import com.npsdk.jetpack_sdk.base.view.DialogNotification
+import com.npsdk.jetpack_sdk.base.view.ImageFromUrl
+import com.npsdk.jetpack_sdk.base.view.LoadingView
+import com.npsdk.jetpack_sdk.base.view.ShimmerLoading
+import com.npsdk.jetpack_sdk.base.view.TopAppBarApp
+import com.npsdk.jetpack_sdk.base.view.clickableWithoutRipple
+import com.npsdk.jetpack_sdk.repository.CallbackCreateOrder
+import com.npsdk.jetpack_sdk.repository.CallbackOrder
+import com.npsdk.jetpack_sdk.repository.CheckValidatePayment
+import com.npsdk.jetpack_sdk.repository.CreateOrderWalletRepo
 import com.npsdk.jetpack_sdk.repository.model.CreateOrderParamsWallet
 import com.npsdk.jetpack_sdk.repository.model.ListBankModel
 import com.npsdk.jetpack_sdk.repository.model.MerchantInfo
 import com.npsdk.jetpack_sdk.repository.model.ValidatePaymentModel
 import com.npsdk.jetpack_sdk.repository.model.validate_payment.CreditCard
 import com.npsdk.jetpack_sdk.repository.model.validate_payment.Methods
+import com.npsdk.jetpack_sdk.repository.openWebviewOTP
 import com.npsdk.jetpack_sdk.theme.PaymentNinepayTheme
 import com.npsdk.jetpack_sdk.theme.fontAppBold
 import com.npsdk.jetpack_sdk.theme.fontAppDefault
@@ -60,7 +88,15 @@ import com.npsdk.module.PaymentMethod
 import com.npsdk.module.model.Bank
 import com.npsdk.module.model.UserInfo
 import com.npsdk.module.utils.*
+import com.npsdk.module.model.UserInfoModel
+import com.npsdk.module.utils.Actions
+import com.npsdk.module.utils.Flavor
+import com.npsdk.module.utils.NameCallback
 import java.net.URLEncoder
+import androidx.compose.material.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import kotlinx.coroutines.launch
 
 class DataOrder {
     companion object {
@@ -84,6 +120,26 @@ class DataOrder {
 
         // Limit bank (when linked)
         var isLimitItem by mutableStateOf(true)
+
+        // Hàm này đc gọi trong khởi tạo SDK.
+        // Xoá toàn bộ cache của user cũ
+        @JvmStatic
+        fun clearData() {
+            urlData = ""
+            isShowResultScreen = true
+            dataOrderSaved = null
+            amount = null
+            listBankModel = null
+            activityOrder = null
+            selectedItemMethod = null
+            userInfo = null
+            merchantInfo = null
+            totalAmount = null
+            bankTokenSelected = null
+            isProgressing = false
+            isStartScreen = false
+            isLimitItem = true
+        }
     }
 }
 
@@ -91,8 +147,9 @@ enum class CreditCardEnum {
     VISA, MASTER, JCB, AMEX
 }
 class OrderActivity : ComponentActivity() {
-
     private var methodDefault: String? = null
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         isProgressing = false
@@ -129,18 +186,21 @@ class OrderActivity : ComponentActivity() {
         super.onDestroy()
     }
 
+    @OptIn(ExperimentalMaterialApi::class)
     @Composable
     private fun Body() {
         val inputViewModel: InputViewModel = viewModel()
         val appViewModel: AppViewModel = viewModel()
         val context = LocalContext.current
+        val scope = rememberCoroutineScope()
 
         var showDialogDeposit by remember {
             mutableStateOf(false)
         }
+        val keyboardController = LocalSoftwareKeyboardController.current
+        val focusRequester = remember { FocusRequester() }
 
         LaunchedEffect(true) {
-
             // Get detail payment
             CheckValidatePayment().check(context, DataOrder.urlData, CallbackOrder { data ->
                 DataOrder.dataOrderSaved = data
@@ -185,110 +245,169 @@ class OrderActivity : ComponentActivity() {
 
 
 
-        Column {
-            TopAppBarApp(isShowBack = true, onBack = {
-                finish()
-            })
-
-            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.TopStart) {
-                LazyColumn(verticalArrangement = Arrangement.Top, horizontalAlignment = Alignment.CenterHorizontally) {
-                    // Card giao dien thong tin don hang
-                    item {
-                        DataOrder.dataOrderSaved?.let {
-                            Box(modifier = Modifier.padding(12.dp)) {
-                                HeaderOrder(it)
-                            }
-                        }
-
+        val bottomSheetState = rememberModalBottomSheetState(
+            initialValue = ModalBottomSheetValue.Hidden,
+            skipHalfExpanded = true,
+                    confirmValueChange = {
+                        it !=ModalBottomSheetValue.HalfExpanded
                     }
+        )
 
-                    // Show tat ca phuong thuc thanh toan
-                    item {
-                        DataOrder.dataOrderSaved?.data?.methods?.let {
-                            Box(modifier = Modifier.padding(horizontal = 12.dp)) {
-                                ShowMethodPayment(it, onItemClick = { itemCallback ->
-                                    DataOrder.selectedItemMethod = itemCallback.code
-                                    // Tinh phi mac dinh (chưa co phi)
-                                    DataOrder.totalAmount = DataOrder.dataOrderSaved!!.data.amount
-
-                                    // Phi Vi 9Pay
-                                    if (DataOrder.selectedItemMethod == PaymentMethod.WALLET) {
-                                        DataOrder.totalAmount = DataOrder.dataOrderSaved!!.data.feeData.wallet
-                                        return@ShowMethodPayment
-                                    }
-
-                                    // Phi the ATM
-                                    if (DataOrder.selectedItemMethod == PaymentMethod.ATM_CARD) {
-                                        DataOrder.totalAmount = DataOrder.dataOrderSaved!!.data.feeData.atmCard
-                                        return@ShowMethodPayment
-                                    }
-
-                                    // Phi chuyen khoan ngan hang
-                                    if (DataOrder.selectedItemMethod == PaymentMethod.TRANSFER) {
-                                        DataOrder.totalAmount = DataOrder.dataOrderSaved!!.data.feeData.collection
-                                        return@ShowMethodPayment
-                                    }
-
-                                    // Phi the quoc te
-                                    if (DataOrder.selectedItemMethod == PaymentMethod.CREDIT_CARD) {
-                                        var creditCard = DataOrder.dataOrderSaved!!.data.feeData.creditCard;
-                                        for (card in creditCard){
-                                            if (card.cardBrand == CreditCardEnum.VISA.name){
-                                                DataOrder.totalAmount = card.inLand
-                                                return@ShowMethodPayment
-                                            }
-                                        }
-                                    }
-
-                                    if (DataOrder.selectedItemMethod == PaymentMethod.LINK_BANK) {
-                                        // Lấy phi theo giống hình thức số dư ví, bởi vì thẻ lưu trên ví.
-                                        DataOrder.totalAmount = DataOrder.dataOrderSaved!!.data.feeData.wallet
-
-                                        // Set mac dinh item dau tien neu link bank click
-                                        if (bankTokenSelected == null) {
-                                            // Chon mac dinh ngan hang lien ket dau tien neu co
-                                            userInfo?.let {
-                                                if ((it.banks ?: arrayListOf()).isNotEmpty()) {
-                                                    bankTokenSelected = it.banks.first()
-                                                }
-                                            }
-                                        }
-                                    }
-                                })
-                            }
-                        }
-                    }
-
-                    item {
-                        Spacer(modifier = Modifier.height(30.dp))
-                    }
-                }
-
-
-                // Hien thi dialog nap tien neu khong du tien
-                if (showDialogDeposit) Box(modifier = Modifier.align(Alignment.Center)) {
-                    ShowDepositDialog(onDismiss = {
-                        showDialogDeposit = !showDialogDeposit
-                    }, onDeposit = {
-                        isProgressing = true
-                        NPayLibrary.getInstance().openSDKWithAction(Actions.DEPOSIT)
-                    })
-                }
-
-                // Thong bao tao giao dich (neu co loi xay ra)
-                if (inputViewModel.showNotification.value) {
-                    Box(modifier = Modifier.align(Alignment.Center)) {
-                        DialogNotification(contextString = inputViewModel.stringDialog.value, onDismiss = {
-                            inputViewModel.showNotification.value = false
-                        })
-                    }
-                }
-
-                // Loading khi goi API
-                if (appViewModel.isShowLoading) Box(modifier = Modifier.align(Alignment.Center)) {
-                    LoadingView()
+        LaunchedEffect(bottomSheetState) {
+            snapshotFlow { bottomSheetState.isVisible }.collect { isVisible ->
+                if (!isVisible) {
+                    keyboardController?.hide()
                 }
             }
+        }
+
+        ModalBottomSheetLayout(
+            sheetState = bottomSheetState,
+            sheetShape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+            sheetContent = {
+                PasswordBottomSheet(
+                    keyboardController = keyboardController,
+                    focusRequester = focusRequester,
+                    bottomSheetState = bottomSheetState,
+                )
+            },
+        ) {
+            Column {
+                TopAppBarApp(isShowBack = true, onBack = {
+                    finish()
+                })
+
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.TopStart) {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.Top,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        // Card giao dien thong tin don hang
+                        item {
+                            DataOrder.dataOrderSaved?.let {
+                                Box(modifier = Modifier.padding(12.dp)) {
+                                    HeaderOrder(it)
+                                }
+                            }
+
+                        }
+
+                        // Show tat ca phuong thuc thanh toan
+                        item {
+
+                            DataOrder.dataOrderSaved?.data?.methods?.let {
+                                Box(modifier = Modifier.padding(horizontal = 12.dp)) {
+                                    ShowMethodPayment(it, onItemClick = { itemCallback ->
+                                        DataOrder.selectedItemMethod = itemCallback.code
+                                        // Tinh phi mac dinh (chưa co phi)
+                                        DataOrder.totalAmount =
+                                            DataOrder.dataOrderSaved!!.data.amount
+
+                                        // Phi Vi 9Pay
+                                        if (DataOrder.selectedItemMethod == PaymentMethod.WALLET) {
+                                            DataOrder.totalAmount =
+                                                DataOrder.dataOrderSaved!!.data.feeData.wallet
+                                            return@ShowMethodPayment
+                                        }
+
+                                        // Phi the ATM
+                                        if (DataOrder.selectedItemMethod == PaymentMethod.ATM_CARD) {
+                                            DataOrder.totalAmount =
+                                                DataOrder.dataOrderSaved!!.data.feeData.atmCard
+                                            return@ShowMethodPayment
+                                        }
+
+                                        if (DataOrder.selectedItemMethod == PaymentMethod.LINK_BANK) {
+                                            // Lấy phi theo giống hình thức số dư ví, bởi vì thẻ lưu trên ví.
+                                            DataOrder.totalAmount =
+                                                DataOrder.dataOrderSaved!!.data.feeData.wallet
+                                            // Phi chuyen khoan ngan hang
+                                            if (DataOrder.selectedItemMethod == PaymentMethod.TRANSFER) {
+                                                DataOrder.totalAmount =
+                                                    DataOrder.dataOrderSaved!!.data.feeData.collection
+                                                return@ShowMethodPayment
+                                            }
+
+                                            // Phi the quoc te
+                                            if (DataOrder.selectedItemMethod == PaymentMethod.CREDIT_CARD) {
+                                                var creditCard =
+                                                    DataOrder.dataOrderSaved!!.data.feeData.creditCard;
+                                                for (card in creditCard) {
+                                                    if (card.cardBrand == CreditCardEnum.VISA.name) {
+                                                        DataOrder.totalAmount = card.inLand
+                                                        return@ShowMethodPayment
+                                                    }
+                                                }
+                                            }
+
+                                            if (DataOrder.selectedItemMethod == PaymentMethod.LINK_BANK) {
+                                                // Lấy phi theo giống hình thức số dư ví, bởi vì thẻ lưu trên ví.
+                                                DataOrder.totalAmount =
+                                                    DataOrder.dataOrderSaved!!.data.feeData.wallet
+
+                                                // Set mac dinh item dau tien neu link bank click
+                                                if (bankTokenSelected == null) {
+                                                    // Chon mac dinh ngan hang lien ket dau tien neu co
+                                                    userInfo?.let {
+                                                        if ((it.banks
+                                                                ?: arrayListOf()).isNotEmpty()
+                                                        ) {
+                                                            bankTokenSelected = it.banks.first()
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }})
+                                }
+                            }
+                        }
+
+                        item {
+                            Spacer(modifier = Modifier.height(30.dp))
+                        }
+                    }
+
+
+                    // Hien thi dialog nap tien neu khong du tien
+                    if (showDialogDeposit) Box(modifier = Modifier.align(Alignment.Center)) {
+                        ShowDepositDialog(onDismiss = {
+                            showDialogDeposit = !showDialogDeposit
+                        }, onDeposit = {
+                            isProgressing = true
+                            NPayLibrary.getInstance().openSDKWithAction(Actions.DEPOSIT)
+                        })
+                    }
+
+                    // Thong bao tao giao dich (neu co loi xay ra)
+                    if (inputViewModel.showNotification.value) {
+                        Box(modifier = Modifier.align(Alignment.Center)) {
+                            DialogNotification(
+                                contextString = inputViewModel.stringDialog.value,
+                                onDismiss = {
+                                    inputViewModel.showNotification.value = false
+                                })
+                        }
+                    }
+
+                    // Loading khi goi API
+                    if (appViewModel.isShowLoading) Box(modifier = Modifier.align(Alignment.Center)) {
+                        LoadingView()
+                    }
+
+//                    if (bottomSheetState.is) {
+//                        Box(
+//                            Modifier
+//                                .fillMaxSize()
+//                                .background(Color.Black.copy(alpha = 0.5f))
+//                                .clickable {
+//                                    scope.launch {
+//                                        scaffoldState.bottomSheetState.collapse()
+//                                    }
+//                                }
+//                        )
+//                    }
+                }
+
             Footer(modifier = Modifier.padding(horizontal = 16.dp),
                 clickContinue = { ->
                     if (methodDefault == PaymentMethod.WALLET || DataOrder.selectedItemMethod == PaymentMethod.WALLET) {
@@ -314,8 +433,15 @@ class OrderActivity : ComponentActivity() {
                             }
                         }
 
-                        val intent = Intent(context, PasswordActivity::class.java)
-                        context.startActivity(intent)
+                        scope.launch {
+                            focusRequester.requestFocus()
+                            keyboardController?.show()
+                            bottomSheetState.show()
+                        }
+
+//                        val intent = Intent(context, PasswordActivity::class.java)
+//                        context.startActivity(intent)
+
                         return@Footer
                     }
                     if (DataOrder.selectedItemMethod == PaymentMethod.LINK_BANK) {
@@ -364,6 +490,7 @@ class OrderActivity : ComponentActivity() {
                     intent.putExtra("method", DataOrder.selectedItemMethod)
                     context.startActivity(intent)
                 })
+            }
         }
     }
 

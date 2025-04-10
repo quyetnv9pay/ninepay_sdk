@@ -51,4 +51,14 @@ public interface ApiService {
 
     @GET("/sdk/v1/func/list")
     Call<MerchantModel> getMerchant();
+
+    @POST("/sdk/api/v1/user/list-banks")
+    Call<String> getListPaymentMethod();
+
+    @FormUrlEncoded
+    @POST("/sdk/api/v1/merchant/create-order")
+    Call<String> createOrder(
+            @Header("Device-Id") String deviceId,
+            @Field("data_encrypt") String data
+    );
 }

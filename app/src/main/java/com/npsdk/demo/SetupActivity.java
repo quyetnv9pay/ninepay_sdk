@@ -21,6 +21,7 @@ public class SetupActivity extends AppCompatActivity {
         EditText merchantCode = findViewById(R.id.merchantCode);
         EditText secretKey = findViewById(R.id.secretKey);
         Button btn_open_sdk = findViewById(R.id.btn_open_sdk);
+        EditText phoneNumber = findViewById(R.id.phoneNumber);
         Switch switchButton = findViewById(R.id.switchButton);
 
 
@@ -29,6 +30,7 @@ public class SetupActivity extends AppCompatActivity {
             intent.putExtra("color_code", colorCode.getText().toString());
             intent.putExtra("merchant_code", merchantCode.getText().toString());
             intent.putExtra("secret_key", secretKey.getText().toString());
+            intent.putExtra("phone_number", phoneNumber.getText().toString());
             v.getContext().startActivity(intent);
         });
 

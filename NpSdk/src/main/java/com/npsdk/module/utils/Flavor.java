@@ -11,7 +11,6 @@ public class Flavor {
     public static String baseApi;
     public static String baseShop;
 
-
     public static void configFlavor(String env) {
         switch (env) {
             case EnvironmentKey.STAGING:
@@ -36,13 +35,13 @@ public class Flavor {
     }
 
     public static String setEnvTest(Context context) {
-        String packageName = context.getPackageName();
-//        if (packageName.contains("stg")) {
-            return EnvironmentKey.STAGING;
-//        } else if (packageName.contains("sand")) {
-//           return EnvironmentKey.SANDBOX;
-//        } else {
-//           return EnvironmentKey.PRODUCTION;
-//        }
+//        String packageName = context.getPackageName();
+////        if (packageName.contains("stg")) {
+//            return EnvironmentKey.STAGING;
+////        } else if (packageName.contains("sand")) {
+////           return EnvironmentKey.SANDBOX;
+////        } else {
+          return EnvironmentKey.STAGING;
+////        }
     }
 }

@@ -2,7 +2,10 @@ package com.npsdk.module.model;
 
 import android.content.Context;
 
+import com.npsdk.module.utils.Constants;
 import com.npsdk.module.utils.DeviceUtils;
+import com.npsdk.module.utils.Preference;
+import com.npsdk.module.utils.Utils;
 
 import java.io.Serializable;
 
@@ -12,7 +15,8 @@ public class SdkConfig implements Serializable {
     private final String secretKey;
     private final String uid;
     private final String env;
-    private String brandColor;
+    private final String brandColor;
+    private final String phoneNumber;
 
     protected SdkConfig(Builder builder) {
         merchantCode = builder.mMerchantCode;
@@ -20,11 +24,17 @@ public class SdkConfig implements Serializable {
         uid = builder.mUid;
         env = builder.mEnv;
         brandColor = builder.mBrandColor;
+        phoneNumber = builder.mPhoneNumber;
     }
 
     public String getMerchantCode() {
         if (merchantCode == null) return "";
         return merchantCode;
+    }
+
+    public String getPhoneNumber() {
+        if (phoneNumber == null) return "";
+        return phoneNumber;
     }
 
     public String getSecretKey() {
@@ -52,16 +62,18 @@ public class SdkConfig implements Serializable {
         private String mEnv;
         private String mBrandColor;
         private Context context;
+        private String mPhoneNumber;
         public Builder(Context context) {
             this.context = context;
         }
 
-        public Builder(String merchantCode, String secretkey, String uid, String env, String brandColor) {
+        public Builder(String merchantCode, String secretkey, String uid, String env, String brandColor, String phoneNumber) {
             mMerchantCode = merchantCode;
             mSecretkey = secretkey;
             mUid = uid;
             mEnv = env;
             mBrandColor = brandColor;
+            mPhoneNumber = phoneNumber;
         }
 
         public Builder merchantCode(String merchantCode) {
@@ -95,6 +107,11 @@ public class SdkConfig implements Serializable {
 
         public SdkConfig build() {
             return new SdkConfig(this);
+        }
+
+        public Builder phoneNumber(String phoneNumber) {
+            mPhoneNumber = phoneNumber;
+            return this;
         }
     }
 

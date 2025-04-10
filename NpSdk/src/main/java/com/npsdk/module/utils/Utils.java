@@ -68,7 +68,7 @@ public class Utils {
             case Actions.DATA_CARD:
                 path = "/sdk/data-card";
                 break;
-            case Actions.GAME:
+            case Actions.GAME_CARD:
                 path = "/sdk/game";
                 break;
             case Actions.SERVICE_CARD:
@@ -100,8 +100,9 @@ public class Utils {
             case Actions.QR:
                 path = "/v1/scan-qr-code";
                 break;
-            case  Actions.WITHDRAW:
+            case Actions.WITHDRAW:
                 path = "/v1/rut-tien";
+                break;
         }
         return Flavor.baseUrl + path;
     }
