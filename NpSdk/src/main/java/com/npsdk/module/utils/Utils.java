@@ -103,6 +103,12 @@ public class Utils {
             case Actions.WITHDRAW:
                 path = "/v1/rut-tien";
                 break;
+            case Actions.LINK_BANK:
+                path = "/v1/napas-link/danh-sach";
+                break;
+            case Actions.EKYC:
+                path = "/v1/kyc";
+                break;
         }
         return Flavor.baseUrl + path;
     }

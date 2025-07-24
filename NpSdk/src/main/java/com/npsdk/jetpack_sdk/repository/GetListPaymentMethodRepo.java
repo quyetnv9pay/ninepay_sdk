@@ -4,15 +4,15 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import androidx.annotation.NonNull;
+
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.npsdk.jetpack_sdk.base.api.BaseApiClient;
 import com.npsdk.jetpack_sdk.base.api.EncryptServiceHelper;
 import com.npsdk.module.NPayLibrary;
-import com.npsdk.module.model.ListPaymentMethodResponse;
-import com.npsdk.module.utils.Flavor;
+import com.npsdk.module.utils.JsonUtils;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -27,42 +27,38 @@ public class GetListPaymentMethodRepo extends BaseApiClient {
 
     public void check(Context context, NPayLibrary.ListPaymentMethodCallback callback) {
         executor.execute(() -> {
-            Call<String> call = apiService.getListPaymentMethod(
-            );
+            Call<String> call = apiService.getListPaymentMethod();
             enqueue(call, new Callback<String>() {
                 @Override
-                public void onResponse(Call<String> call, Response<String> response) {
+                public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
                     if (response.code() == 200 && response.body() != null) {
                         String objectDecrypt = EncryptServiceHelper.INSTANCE.decryptAesBase64(
                                 response.body(),
                                 EncryptServiceHelper.INSTANCE.getRandomkeyRaw()
                         );
-                        Gson gson = new GsonBuilder().setPrettyPrinting().create();
                         try {
-                            ListPaymentMethodResponse listPaymentMethodResponse = gson.fromJson(objectDecrypt, ListPaymentMethodResponse.class);
+                            JsonObject result = JsonParser.parseString(objectDecrypt).getAsJsonObject();
                             updateUI(() -> {
-                                callback.onSuccess(listPaymentMethodResponse.getData());
+                                callback.onSuccess(result);
                             });
                         } catch (JsonSyntaxException e) {
-                            JsonObject errorObject = new JsonObject();
-                            errorObject.addProperty("code", 2005);
-                            errorObject.addProperty("message", "Lỗi không xác định");
-                            callback.onError(errorObject);
+                            callback.onSuccess(JsonUtils.wrapWithDefault(
+                                    "Lỗi không xác định",
+                                    2005
+                            ));
                         }
                     } else {
-                        JsonObject errorObject = new JsonObject();
-                        errorObject.addProperty("code", 2005);
-                        errorObject.addProperty("message", "Lỗi không xác định");
-                        callback.onError(errorObject);
+                        callback.onSuccess(JsonUtils.wrapWithDefault(
+                                response.message(),
+                                response.code())
+                        );
                     }
                 }
 
                 @Override
                 public void onFailure(Call<String> call, Throwable t) {
-                    JsonObject errorObject = new JsonObject();
-                    errorObject.addProperty("code", 2005);
-                    errorObject.addProperty("message", "Lỗi không xác định");
-                    callback.onError(errorObject);
+                    callback.onSuccess(
+                            JsonUtils.wrapWithDefault(t.getMessage(), 2005));
                 }
             });
         });
@@ -73,3 +69,4 @@ public class GetListPaymentMethodRepo extends BaseApiClient {
         mainThread.post(runnable);
     }
 }
+

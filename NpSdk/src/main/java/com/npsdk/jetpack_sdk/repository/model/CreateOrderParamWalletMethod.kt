@@ -5,5 +5,4 @@ data class CreateOrderParamWalletMethod (
     var productName: String? = "",
     var requestId: String? = "",
     var merchantCode: String? = "",
-    var orderType: String? = "",
 )

@@ -29,6 +29,7 @@ import com.npsdk.module.api.RefreshTokenTask;
 import com.npsdk.module.model.SdkConfig;
 import com.npsdk.module.model.UserInfo;
 import com.npsdk.module.utils.*;
+
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
@@ -36,6 +37,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @SuppressLint("StaticFieldLeak")
 public class NPayLibrary {
@@ -105,10 +107,10 @@ public class NPayLibrary {
             return;
         }
         long currentTime = System.currentTimeMillis();
-        long lastTimeGetPublickey = Preference.getLong(activity, Flavor.prefKey + Constants.LAST_TIME_PUBLIC_KEY, 0);
-        boolean isNeedGetPublickey = (currentTime - lastTimeGetPublickey) > 36000; // if last get more than 10 hours.
+        long lastTimeGetPublicKey = Preference.getLong(activity, Flavor.prefKey + Constants.LAST_TIME_PUBLIC_KEY, 0);
+        boolean isNeedGetPublicKey = (currentTime - lastTimeGetPublicKey) > 36000; // if last get more than 10 hours.
 
-        if (!AppUtils.INSTANCE.isLogged() && isNeedGetPublickey) {
+        if (!AppUtils.INSTANCE.isLogged() && isNeedGetPublicKey) {
             GetPublickeyTask getPublickeyTask = new GetPublickeyTask(activity);
             getPublickeyTask.execute();
         }
@@ -314,10 +316,10 @@ public class NPayLibrary {
         String token = Preference.getString(activity, Flavor.prefKey + Constants.ACCESS_TOKEN, "");
         String phone = Preference.getString(activity, sdkConfig.getEnv() + Constants.PHONE, "");
         if (token.isEmpty() || phone.isEmpty()) {
-            JsonObject errorObject = new JsonObject();
-            errorObject.addProperty("code", Constants.NOT_LOGIN);
-            errorObject.addProperty("message", "Tài khoản chưa được đăng nhập!");
-            callback.onError(errorObject);
+            callback.onSuccess(JsonUtils.wrapWithDefault(
+                    "Tài khoản chưa được đăng nhập!",
+                    Constants.NOT_LOGIN
+            ));
             return;
         }
 
@@ -329,8 +331,6 @@ public class NPayLibrary {
     public void createOrder(
             String amount,
             String productName,
-            String requestId,
-            String orderType,
             String bType,
             String bInfo,
             FailureCallback onFail
@@ -359,14 +359,38 @@ public class NPayLibrary {
             }
         };
         CreatePaymentOrderRepo createPaymentOrderRepo = new CreatePaymentOrderRepo();
+
+        String requestId = UUID.randomUUID().toString();
+
         CreateOrderParamWalletMethod param = new CreateOrderParamWalletMethod(
                 amount,
                 productName,
                 requestId,
-                sdkConfig.getMerchantCode(),
-                orderType
+                sdkConfig.getMerchantCode()
         );
         createPaymentOrderRepo.check(activity, param, callback);
+    }
+
+    public void testOrder(
+            String amount,
+            String productName,
+            String bType,
+            String bInfo,
+            FailureCallback onFail
+    ) {
+        Intent intent = new Intent(activity, NPayActivity.class);
+
+        String endpoint = "payment";
+        Map<String, String> params = Map.of(
+                "order_id", productName,
+                "b_type", bType,
+                "b_info", bInfo
+        );
+
+        String encodedUrl = encodeEndpoint(endpoint, params);
+        String data = NPayLibrary.getInstance().walletData(encodedUrl);
+        intent.putExtra("data", data);
+        activity.startActivity(intent);
     }
 
     public static String encodeEndpoint(String endpoint, Map<String, String> params) {
@@ -392,7 +416,6 @@ public class NPayLibrary {
 
     public interface ListPaymentMethodCallback {
         void onSuccess(JsonObject response);
-        void onError(JsonObject response);
     }
 
     public interface FailureCallback {

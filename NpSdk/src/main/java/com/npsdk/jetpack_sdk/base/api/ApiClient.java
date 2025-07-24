@@ -47,8 +47,12 @@ public class ApiClient {
         OkHttpClient httpClient = null;
         try {
             httpClient = new OkHttpClient.Builder().addInterceptor(chain -> {
-                Request.Builder builder = chain.request().newBuilder().addHeader("Merchant-Code",
-                        NPayLibrary.getInstance().sdkConfig.getMerchantCode()).addHeader("App-Type", "SDK").addHeader("platform", "android").addHeader("is-new-sdk", "true").addHeader("Secret-Key", NPayLibrary.getInstance().sdkConfig.getSecretKey());
+                Request.Builder builder = chain.request().newBuilder()
+                        .addHeader("Merchant-Code", NPayLibrary.getInstance().sdkConfig.getMerchantCode())
+                        .addHeader("App-Type", "SDK")
+                        .addHeader("platform", "android")
+                        .addHeader("is-new-sdk", "true")
+                        .addHeader("Secret-Key", NPayLibrary.getInstance().sdkConfig.getSecretKey());
                 String Rke = EncryptServiceHelper.INSTANCE.getRandomkeyEncrypt();
                 if (getToken() != null && Rke != null) {
                     builder.addHeader("Authorization", getToken()).addHeader("Rke", Rke);

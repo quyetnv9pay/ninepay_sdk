@@ -45,8 +45,8 @@ public class RestfulApi {
     private OkHttpClient getCommonClient() {
         CookieManager cookieManager = new CookieManager();
         cookieManager.setCookiePolicy(CookiePolicy.ACCEPT_ALL);
-        HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-        logging.setLevel(HttpLoggingInterceptor.Level.BODY);
+//        HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
+//        logging.setLevel(HttpLoggingInterceptor.Level.BODY);
         OkHttpClient httpClient = null;
         try {
             httpClient = new OkHttpClient.Builder()
@@ -64,7 +64,7 @@ public class RestfulApi {
                     .connectTimeout(30, TimeUnit.SECONDS)
                     .writeTimeout(30, TimeUnit.SECONDS)
                     .readTimeout(30, TimeUnit.SECONDS)
-                    .addInterceptor(logging)
+//                    .addInterceptor(logging)
                     .addInterceptor(new CustomInterceptor())
                     .build();
         } catch (Exception e) {

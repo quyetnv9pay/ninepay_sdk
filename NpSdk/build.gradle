@@ -68,7 +68,6 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.core:core-ktx:1.2.0'
     def compose_ui_version = "1.4.3"
 
     implementation 'androidx.compose.material3:material3'
@@ -113,8 +112,8 @@ dependencies {
     configurations.all {
         exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
     } 
-//    implementation 'co.hyperverge:hyperkyc:0.33.0'
-//    implementation "co.hyperverge:hvnfc-sdk:3.0.0"
+    implementation 'co.hyperverge:hyperkyc:0.33.0'
+    implementation "co.hyperverge:hvnfc-sdk:3.0.0"
 }
 
 afterEvaluate {

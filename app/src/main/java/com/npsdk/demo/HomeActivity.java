@@ -71,7 +71,6 @@ public class HomeActivity extends AppCompatActivity {
 
         setView();
         getUserInfo();
-
     }
 
     private void setView() {

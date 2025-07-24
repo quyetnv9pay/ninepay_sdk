@@ -52,8 +52,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-//import co.hyperverge.hyperkyc.HyperKyc;
-//import co.hyperverge.hyperkyc.data.models.HyperKycConfig;
+import co.hyperverge.hyperkyc.HyperKyc;
+import co.hyperverge.hyperkyc.data.models.HyperKycConfig;
 
 public class NPayActivity extends AppCompatActivity {
     public static final String TAG = NPayActivity.class.getName();
@@ -127,7 +127,6 @@ public class NPayActivity extends AppCompatActivity {
         setUpWeb2Client();
         setCookieRefreshToken();
 
-//        screenshotDetecter();
         downloadWebview(webView);
         downloadWebview(webView2);
 
@@ -513,30 +512,30 @@ public class NPayActivity extends AppCompatActivity {
                 }
 
                 if (intent.getAction().equals("callEkyc")) {
-//                    String jsonString = intent.getStringExtra("JSON_OBJECT");
-//                    HyperKycParams hvParam = KycUtil.createHyperKycParams(jsonString);
-//                    if (hvParam == null) {
-//                        System.out.println("Param null");
-//                        return;
-//                    }
-//                    KycUtil.startWorkflow( hyperKycLauncher,hvParam);
+                    String jsonString = intent.getStringExtra("JSON_OBJECT");
+                    HyperKycParams hvParam = KycUtil.createHyperKycParams(jsonString);
+                    if (hvParam == null) {
+                        System.out.println("Param null");
+                        return;
+                    }
+                    KycUtil.startWorkflow( hyperKycLauncher,hvParam);
                 }
             }
         };
     }
 
-//    private final ActivityResultLauncher<HyperKycConfig> hyperKycLauncher =
-//            registerForActivityResult(new HyperKyc.Contract(), result -> {
-//                Gson gson = new Gson();
-//                String jsonStr = gson.toJson(result);
-//                String jsExecute = "javascript: window.pasteDataNFC('" + jsonStr + "')";
-//                Handler mainHandler = new Handler(Looper.getMainLooper());
-//                Runnable myRunnable = () -> {
-//                    if (NPayActivity.webView == null) return;
-//                    NPayActivity.webView.loadUrl(jsExecute);
-//                };
-//                mainHandler.post(myRunnable);
-//            });
+    private final ActivityResultLauncher<HyperKycConfig> hyperKycLauncher =
+            registerForActivityResult(new HyperKyc.Contract(), result -> {
+                Gson gson = new Gson();
+                String jsonStr = gson.toJson(result);
+                String jsExecute = "javascript: window.pasteDataNFC('" + jsonStr + "')";
+                Handler mainHandler = new Handler(Looper.getMainLooper());
+                Runnable myRunnable = () -> {
+                    if (NPayActivity.webView == null) return;
+                    NPayActivity.webView.loadUrl(jsExecute);
+                };
+                mainHandler.post(myRunnable);
+            });
 
     private void findView() {
         webView = findViewById(R.id.webView);
