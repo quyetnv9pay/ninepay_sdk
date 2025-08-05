@@ -116,11 +116,11 @@ dependencies {
     implementation "co.hyperverge:hvnfc-sdk:3.0.0"
 }
 
-publishing {
-    publications {
-        // Creates a Maven publication called "release".
-        release(MavenPublication) {
-            afterEvaluate {
+afterEvaluate {
+    publishing {
+        publications {
+            // Creates a Maven publication called "release".
+            release(MavenPublication) {
                 from components.release
                 groupId = 'com.github.mobile9pay'
                 artifactId = 'NpSdk'
