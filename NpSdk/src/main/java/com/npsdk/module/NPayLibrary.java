@@ -330,7 +330,7 @@ public class NPayLibrary {
     }
 
     public void createOrder(
-        String requestId,
+        @Nullable String requestId,
         String amount,
         String productName,
         String bType,
@@ -344,7 +344,7 @@ public class NPayLibrary {
 
                 String endpoint = "payment";
                 Map<String, String> params = Map.of(
-                    "order_id", Objects.requireNonNull(result.getOrderCode()),
+                    "order_id", result.getOrderCode(),
                     "b_type", bType,
                     "b_info", bInfo
                 );
@@ -361,6 +361,11 @@ public class NPayLibrary {
             }
         };
         CreatePaymentOrderRepo createPaymentOrderRepo = new CreatePaymentOrderRepo();
+
+        // Tạo requestId nếu null
+        if (requestId == null) {
+            requestId = UUID.randomUUID().toString();
+        }
 
         CreateOrderParamWalletMethod param = new CreateOrderParamWalletMethod(
             amount,
