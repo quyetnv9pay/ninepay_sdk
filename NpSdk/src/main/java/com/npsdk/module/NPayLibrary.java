@@ -18,7 +18,6 @@ import com.npsdk.jetpack_sdk.InputCardActivity;
 import com.npsdk.jetpack_sdk.OrderActivity;
 import com.npsdk.jetpack_sdk.base.AppUtils;
 import com.npsdk.jetpack_sdk.repository.CallbackCreateOrderPaymentMethod;
-import com.npsdk.jetpack_sdk.repository.CallbackCreateSendTicketOrder;
 import com.npsdk.jetpack_sdk.repository.CreatePaymentOrderRepo;
 import com.npsdk.jetpack_sdk.repository.CreateSendTicketOrderRepo;
 import com.npsdk.jetpack_sdk.repository.GetInfoMerchant;
@@ -426,7 +425,7 @@ public class NPayLibrary {
         int amount,
         int fee,
         String content,
-        CallbackCreateSendTicketOrder callback
+        CreateSendTicketOrderCallback callback
     ) {
         CreateSendTicketOrderRepo createSendTicketOrderRepo = new CreateSendTicketOrderRepo();
 
@@ -439,6 +438,11 @@ public class NPayLibrary {
             "SEND_TICKET"
         );
         createSendTicketOrderRepo.sendTicket(param, callback);
+    }
+
+    public interface CreateSendTicketOrderCallback {
+        void onSuccess(JsonObject response);
+        void onFailed(JsonObject error);
     }
 
     public interface ListPaymentMethodCallback {
