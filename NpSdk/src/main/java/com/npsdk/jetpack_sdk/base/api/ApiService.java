@@ -61,4 +61,16 @@ public interface ApiService {
             @Header("Device-Id") String deviceId,
             @Field("data_encrypt") String data
     );
+
+    @Headers({
+        "Content-Type: application/json",
+        "x-ignore: staging",
+        "X-Signature: 123",
+    })
+    @POST("/sdk/api/v1/send-ticket/create-order")
+    Call<String> createSendTicketOrder(
+        @Header("Merchant-Key") String merchantKey,
+        @Header("Secret") String secret,
+        @Body CreateSendTicketOrderBody body
+    );
 }

@@ -18,9 +18,12 @@ import com.npsdk.jetpack_sdk.InputCardActivity;
 import com.npsdk.jetpack_sdk.OrderActivity;
 import com.npsdk.jetpack_sdk.base.AppUtils;
 import com.npsdk.jetpack_sdk.repository.CallbackCreateOrderPaymentMethod;
+import com.npsdk.jetpack_sdk.repository.CallbackCreateSendTicketOrder;
 import com.npsdk.jetpack_sdk.repository.CreatePaymentOrderRepo;
+import com.npsdk.jetpack_sdk.repository.CreateSendTicketOrderRepo;
 import com.npsdk.jetpack_sdk.repository.GetInfoMerchant;
 import com.npsdk.jetpack_sdk.repository.model.CreateOrderParamWalletMethod;
+import com.npsdk.jetpack_sdk.repository.model.CreateSendTicketOrderBody;
 import com.npsdk.jetpack_sdk.repository.model.DataCreateOrderPaymentMethod;
 import com.npsdk.module.api.GetInfoTask;
 import com.npsdk.jetpack_sdk.repository.GetListPaymentMethodRepo;
@@ -37,8 +40,8 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
+
 
 @SuppressLint("StaticFieldLeak")
 public class NPayLibrary {
@@ -417,6 +420,25 @@ public class NPayLibrary {
         }
 
         return encodedUrl.toString();
+    }
+
+    public void testSendTicket(
+        int amount,
+        int fee,
+        String content,
+        CallbackCreateSendTicketOrder callback
+    ) {
+        CreateSendTicketOrderRepo createSendTicketOrderRepo = new CreateSendTicketOrderRepo();
+
+        CreateSendTicketOrderBody param = new CreateSendTicketOrderBody(
+            amount,
+            fee,
+            content,
+            UUID.randomUUID().toString(),
+            AppUtils.INSTANCE.getCurrentTimeFormatted(),
+            "SEND_TICKET"
+        );
+        createSendTicketOrderRepo.sendTicket(param, callback);
     }
 
     public interface ListPaymentMethodCallback {
