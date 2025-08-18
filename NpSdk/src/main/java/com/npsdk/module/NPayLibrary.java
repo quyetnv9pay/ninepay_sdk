@@ -299,8 +299,8 @@ public class NPayLibrary {
         return obj.toString();
     }
 
-    public void callBackToMerchant(String name, Object status, @Nullable Object param) {
-        listener.sdkDidComplete(name, status, param);
+    public void callBackToMerchant(String name, Boolean status, @Nullable Object params) {
+        listener.sdkDidComplete(name, status, params);
     }
 
     public void callbackBackToAppfrom(String screen) {

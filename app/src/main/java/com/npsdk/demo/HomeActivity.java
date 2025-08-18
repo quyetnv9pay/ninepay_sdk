@@ -117,7 +117,7 @@ public class HomeActivity extends AppCompatActivity {
             }
 
             @Override
-            public void sdkDidComplete(String name, Object status, @Nullable Object params) {
+            public void sdkDidComplete(String name, Boolean status, @Nullable Object params) {
                 getUserInfo();
             }
         });

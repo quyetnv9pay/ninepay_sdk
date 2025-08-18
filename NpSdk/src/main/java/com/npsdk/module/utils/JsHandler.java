@@ -125,7 +125,7 @@ public class JsHandler {
                     activity.startActivity(messageIntent);
                     break;
                 case onLoggedInSuccess:
-                    NPayLibrary.getInstance().callBackToMerchant(NameCallback.LOGIN, "onSuccess", null);
+                    NPayLibrary.getInstance().callBackToMerchant(NameCallback.LOGIN, true, null);
                     break;
                 case onPaymentSuccess:
                     NPayLibrary.getInstance().callBackToMerchant(NameCallback.SDK_PAYMENT, true, null);
@@ -321,7 +321,7 @@ public class JsHandler {
         try {
             System.out.println("params " + jsonObject);
             String nameCallback = jsonObject.getString("name");
-            Object statusCallback = jsonObject.getString("status");
+            Boolean statusCallback = jsonObject.getString("status").equals("onSuccess");
             String params = null;
             if (jsonObject.has("params")) {
                 params = jsonObject.getString("params");

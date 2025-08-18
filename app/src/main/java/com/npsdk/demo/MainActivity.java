@@ -20,6 +20,10 @@ import com.npsdk.module.model.SdkConfig;
 import com.npsdk.module.utils.Actions;
 import com.npsdk.module.utils.Flavor;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     public static final String TAG = "MainActivityLOG";
     boolean isShow = false;
@@ -103,7 +107,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
 
             @Override
-            public void sdkDidComplete(String name, Object status, @Nullable Object params) {
+            public void sdkDidComplete(String name, Boolean status, @Nullable Object params) {
                 Toast.makeText(MainActivity.this, name + " " + status, Toast.LENGTH_SHORT).show();
             }
 
@@ -202,20 +206,37 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 NPayLibrary.getInstance().openPaymentOnSDK(url, PaymentMethod.DEFAULT, DataOrder.Companion.isShowResultScreen());
                 break;
             case R.id.test_click:
-//                NPayLibrary.getInstance().getUserInfo();
-//                NPayLibrary.getInstance().openWallet(url);
-//                String old = Preference.getString(this, Flavor.prefKey + Constants.ACCESS_TOKEN, "");
-//                Preference.save(this, NPayLibrary.getInstance().sdkConfig.getEnv() + Constants.ACCESS_TOKEN, old + "a");
-//                Intent i = new Intent(this, WebviewComposeActivity.class);
-//                i.putExtra("url", "https://zing.vn");
-//                startActivity(i);
-
-//                Intent i = new Intent(this, TestWebviewActivity.class);
-//                startActivity(i);
-
-//                new JsHandler(this).getClipboardData();
-//                NPayLibrary.getInstance().openSDKWithAction("https://stg-sdk.9pay.mobi/v1/viet-qr");
-                NPayLibrary.getInstance().openSDKWithAction(Actions.WITHDRAW);
+                String requestId = UUID.randomUUID().toString();
+                Map<String, Object> metaData = new HashMap<>();
+                metaData.put("event_id", 1999);
+                NPayLibrary.getInstance().createOrder(
+                    requestId,
+                    "9999",
+                    "Test Product",
+                    "",
+                    "",
+                    metaData,
+                    error -> {
+                        // Xử lý khi gọi API thất bại
+                        Log.e("createOrder", "Lỗi tạo đơn hàng: " + error.toString());
+                        Toast.makeText(this, "Tạo đơn hàng thất bại", Toast.LENGTH_SHORT).show();
+                    }
+                );
+//                NPayLibrary.getInstance().testSendTicket(
+//                    100000,
+//                    1000,
+//                    "Test gui ve",
+//                    new NPayLibrary.CreateSendTicketOrderCallback() {
+//                        @Override
+//                        public void onSuccess(JsonObject response) {
+//
+//                        }
+//                        @Override
+//                        public void onFailed(JsonObject error) {
+//
+//                        }
+//                    }
+//                );
                 break;
         }
         binding.edtUrlPaygate.setText("");

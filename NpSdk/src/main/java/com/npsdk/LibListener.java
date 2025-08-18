@@ -12,7 +12,7 @@ public interface LibListener {
 	public void onLogoutSuccessful();
 
 	public void onCloseSDK();
-	public void sdkDidComplete(String name, Object status, @Nullable Object params);
+	public void sdkDidComplete(String name, Boolean status, @Nullable Object params);
 
 	public void backToAppFrom(String screen);
 }
