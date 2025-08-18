@@ -337,6 +337,7 @@ public class NPayLibrary {
         String productName,
         String bType,
         String bInfo,
+        @Nullable Map<String, Object> metaData,
         FailureCallback onFail
     ) {
         CallbackCreateOrderPaymentMethod callback = new CallbackCreateOrderPaymentMethod() {
@@ -373,7 +374,8 @@ public class NPayLibrary {
             amount,
             productName,
             requestId,
-            sdkConfig.getMerchantCode()
+            sdkConfig.getMerchantCode(),
+            metaData
         );
         createPaymentOrderRepo.check(activity, param, callback);
     }

@@ -36,6 +36,11 @@ public class CreatePaymentOrderRepo extends BaseApiClient {
         mapEncrypt.put("product_name", param.getProductName());
         mapEncrypt.put("request_id", param.getRequestId());
         mapEncrypt.put("merchant_code", param.getMerchantCode());
+        // meta_data (JSON object)
+        if (param.getMetaData() != null && !param.getMetaData().isEmpty()) {
+            String metaDataJson = new Gson().toJson(param.getMetaData());
+            mapEncrypt.put("meta_data", metaDataJson);
+        }
 
         String jsonRaw = new Gson().toJson(mapEncrypt);
         String jsonString = EncryptServiceHelper.INSTANCE.encryptKeyAesBase64(jsonRaw, key);
