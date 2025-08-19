@@ -40,7 +40,6 @@ public interface ApiService {
     @POST("/sdk/v1/wallet/payment")
     Call<String> createPayment(@Field("type") String type, @Field("order_id") String orderId);
 
-
     @FormUrlEncoded
     @POST("/sdk/v1/payment/verifyOtp")
     Call<String> verifyPayment(@Field("payment_id") String paymentId, @Field("otp") String otp);
@@ -60,17 +59,5 @@ public interface ApiService {
     Call<String> createOrder(
             @Header("Device-Id") String deviceId,
             @Field("data_encrypt") String data
-    );
-
-    @Headers({
-        "Content-Type: application/json",
-        "x-ignore: staging",
-        "X-Signature: 123",
-    })
-    @POST("/sdk/api/v1/send-ticket/create-order")
-    Call<String> createSendTicketOrder(
-        @Header("Merchant-Key") String merchantKey,
-        @Header("Secret") String secret,
-        @Body CreateSendTicketOrderBody body
     );
 }

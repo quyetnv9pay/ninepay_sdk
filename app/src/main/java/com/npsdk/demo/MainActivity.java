@@ -222,21 +222,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         Toast.makeText(this, "Tạo đơn hàng thất bại", Toast.LENGTH_SHORT).show();
                     }
                 );
-//                NPayLibrary.getInstance().testSendTicket(
-//                    100000,
-//                    1000,
-//                    "Test gui ve",
-//                    new NPayLibrary.CreateSendTicketOrderCallback() {
-//                        @Override
-//                        public void onSuccess(JsonObject response) {
-//
-//                        }
-//                        @Override
-//                        public void onFailed(JsonObject error) {
-//
-//                        }
-//                    }
-//                );
                 break;
         }
         binding.edtUrlPaygate.setText("");

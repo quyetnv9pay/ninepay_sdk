@@ -19,10 +19,8 @@ import com.npsdk.jetpack_sdk.OrderActivity;
 import com.npsdk.jetpack_sdk.base.AppUtils;
 import com.npsdk.jetpack_sdk.repository.CallbackCreateOrderPaymentMethod;
 import com.npsdk.jetpack_sdk.repository.CreatePaymentOrderRepo;
-import com.npsdk.jetpack_sdk.repository.CreateSendTicketOrderRepo;
 import com.npsdk.jetpack_sdk.repository.GetInfoMerchant;
 import com.npsdk.jetpack_sdk.repository.model.CreateOrderParamWalletMethod;
-import com.npsdk.jetpack_sdk.repository.model.CreateSendTicketOrderBody;
 import com.npsdk.jetpack_sdk.repository.model.DataCreateOrderPaymentMethod;
 import com.npsdk.module.api.GetInfoTask;
 import com.npsdk.jetpack_sdk.repository.GetListPaymentMethodRepo;
@@ -421,30 +419,6 @@ public class NPayLibrary {
         }
 
         return encodedUrl.toString();
-    }
-
-    public void testSendTicket(
-        int amount,
-        int fee,
-        String content,
-        CreateSendTicketOrderCallback callback
-    ) {
-        CreateSendTicketOrderRepo createSendTicketOrderRepo = new CreateSendTicketOrderRepo();
-
-        CreateSendTicketOrderBody param = new CreateSendTicketOrderBody(
-            amount,
-            fee,
-            content,
-            UUID.randomUUID().toString(),
-            AppUtils.INSTANCE.getCurrentTimeFormatted(),
-            "SEND_TICKET"
-        );
-        createSendTicketOrderRepo.sendTicket(param, callback);
-    }
-
-    public interface CreateSendTicketOrderCallback {
-        void onSuccess(JsonObject response);
-        void onFailed(JsonObject error);
     }
 
     public interface ListPaymentMethodCallback {
