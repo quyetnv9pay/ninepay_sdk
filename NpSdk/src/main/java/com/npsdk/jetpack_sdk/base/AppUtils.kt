@@ -11,7 +11,6 @@ import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.text.SimpleDateFormat
 import java.util.Calendar
-import java.util.Date
 import java.util.Locale
 
 
@@ -88,10 +87,5 @@ object AppUtils {
             // If Chrome is not installed or the intent fails, you can handle the exception here.
             e.printStackTrace()
         }
-    }
-
-    fun getCurrentTimeFormatted(): String {
-        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-        return sdf.format(Date())
     }
 }
