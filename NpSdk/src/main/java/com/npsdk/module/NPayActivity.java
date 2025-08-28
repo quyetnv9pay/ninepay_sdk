@@ -466,7 +466,7 @@ public class NPayActivity extends AppCompatActivity {
                     return false;
                 }
 
-                if (url.startsWith(Flavor.baseUrl)) {
+                if (url.startsWith(Flavor.baseUrl) || url.startsWith(Constants.STAGING_URL)) {
                     clearWebview2WithToolbar();
                     return false;
                 }
