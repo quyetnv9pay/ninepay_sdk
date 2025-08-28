@@ -9,7 +9,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.PorterDuff;
 import android.hardware.Camera;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
@@ -17,6 +16,7 @@ import android.os.*;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.webkit.*;
 import android.widget.LinearLayout;
@@ -31,6 +31,9 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.gson.Gson;
@@ -563,6 +566,20 @@ public class NPayActivity extends AppCompatActivity {
         webSettings.setPluginState(WebSettings.PluginState.ON);
 
         webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+
+        if (Build.VERSION.SDK_INT >= 35) {
+            ViewCompat.setOnApplyWindowInsetsListener(webView, (v, windowInsets) -> {
+                Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars()
+                        | WindowInsetsCompat.Type.displayCutout());
+
+                // Điều chỉnh margin của chính WebView, để nó KHÔNG nằm dưới nav bar
+                ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
+                lp.setMargins(insets.left, insets.top, insets.right, insets.bottom);
+                v.setLayoutParams(lp);
+
+                return WindowInsetsCompat.CONSUMED;
+            });
+        }
 
         webView.setWebChromeClient(new WebChromeClient() {
 
