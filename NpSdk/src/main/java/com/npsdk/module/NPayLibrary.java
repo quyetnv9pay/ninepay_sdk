@@ -161,7 +161,7 @@ public class NPayLibrary {
                 Map<String, Object> userInfoMap = new HashMap<>();
                 userInfoMap.put("phone", userInfo.getPhone());
                 userInfoMap.put("balance", userInfo.getBalance());
-                userInfoMap.put("statusKyc", userInfo.getStatus());
+                userInfoMap.put("kycStatus", userInfo.getStatus());
                 userInfoMap.put("name", userInfo.getName());
                 String json = gson.toJson(userInfoMap);
                 listener.getInfoSuccess(json);
@@ -205,7 +205,7 @@ public class NPayLibrary {
                 Map<String, Object> userInfoMap = new HashMap<>();
                 userInfoMap.put("phone", userInfo.getPhone());
                 userInfoMap.put("balance", userInfo.getBalance());
-                userInfoMap.put("statusKyc", userInfo.getStatus());
+                userInfoMap.put("kycStatus", userInfo.getStatus());
                 userInfoMap.put("name", userInfo.getName());
                 userInfoMap.put("banks", userInfo.getBanks());
                 String json = gson.toJson(userInfoMap);
