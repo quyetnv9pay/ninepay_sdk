@@ -16,7 +16,6 @@ import android.os.*;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.webkit.*;
 import android.widget.LinearLayout;
@@ -33,6 +32,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
@@ -89,6 +89,22 @@ public class NPayActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_npay);
+
+        if (Build.VERSION.SDK_INT >= 35) {
+            // Cho phép layout full màn hình, tự xử lý insets
+            WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+            View rootView = findViewById(R.id.rootView);
+            ViewCompat.setOnApplyWindowInsetsListener(rootView, (v, insets) -> {
+                Insets ime = insets.getInsets(WindowInsetsCompat.Type.ime());
+                Insets sys = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+
+                int bottom = Math.max(ime.bottom, sys.bottom);
+
+                v.setPadding(sys.left, sys.top, sys.right, bottom);
+
+                return insets;
+            });
+        }
 
         StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder().build());
 
@@ -566,20 +582,6 @@ public class NPayActivity extends AppCompatActivity {
         webSettings.setPluginState(WebSettings.PluginState.ON);
 
         webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-
-        if (Build.VERSION.SDK_INT >= 35) {
-            ViewCompat.setOnApplyWindowInsetsListener(webView, (v, windowInsets) -> {
-                Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars()
-                        | WindowInsetsCompat.Type.displayCutout());
-
-                // Điều chỉnh margin của chính WebView, để nó KHÔNG nằm dưới nav bar
-                ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) v.getLayoutParams();
-                lp.setMargins(insets.left, insets.top, insets.right, insets.bottom);
-                v.setLayoutParams(lp);
-
-                return WindowInsetsCompat.CONSUMED;
-            });
-        }
 
         webView.setWebChromeClient(new WebChromeClient() {
 
