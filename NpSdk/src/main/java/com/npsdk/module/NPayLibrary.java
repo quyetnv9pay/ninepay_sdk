@@ -336,29 +336,18 @@ public class NPayLibrary {
         String bType,
         String bInfo,
         @Nullable Map<String, Object> metaData,
-        FailureCallback onFail
+        CallbackCreateOrderPaymentMethod callback
     ) {
-        CallbackCreateOrderPaymentMethod callback = new CallbackCreateOrderPaymentMethod() {
+        CallbackCreateOrderPaymentMethod wrappedCallback = new CallbackCreateOrderPaymentMethod() {
             @Override
             public void onSuccess(DataCreateOrderPaymentMethod result) {
-                Intent intent = new Intent(activity, NPayActivity.class);
-
-                String endpoint = "payment";
-                Map<String, String> params = Map.of(
-                    "order_id", result.getOrderCode(),
-                    "b_type", bType,
-                    "b_info", bInfo
-                );
-
-                String encodedUrl = encodeEndpoint(endpoint, params);
-                String data = NPayLibrary.getInstance().walletData(encodedUrl);
-                intent.putExtra("data", data);
-                activity.startActivity(intent);
+                callback.onSuccess(result);
+                payOrder(result.getOrderCode(), bType, bInfo);
             }
 
             @Override
             public void onError(JsonObject error) {
-                onFail.onFailed(error);
+                callback.onError(error);
             }
         };
         CreatePaymentOrderRepo createPaymentOrderRepo = new CreatePaymentOrderRepo();
@@ -375,23 +364,21 @@ public class NPayLibrary {
             sdkConfig.getMerchantCode(),
             metaData
         );
-        createPaymentOrderRepo.check(activity, param, callback);
+        createPaymentOrderRepo.check(activity, param, wrappedCallback);
     }
 
-    public void testOrder(
-            String amount,
-            String productName,
-            String bType,
-            String bInfo,
-            FailureCallback onFail
+    public void payOrder(
+        String orderId,
+        String bType,
+        String bInfo
     ) {
         Intent intent = new Intent(activity, NPayActivity.class);
 
         String endpoint = "payment";
         Map<String, String> params = Map.of(
-                "order_id", productName,
-                "b_type", bType,
-                "b_info", bInfo
+        "order_id", orderId,
+        "b_type", bType,
+        "b_info", bInfo
         );
 
         String encodedUrl = encodeEndpoint(endpoint, params);
@@ -423,9 +410,5 @@ public class NPayLibrary {
 
     public interface ListPaymentMethodCallback {
         void onSuccess(JsonObject response);
-    }
-
-    public interface FailureCallback {
-        void onFailed(JsonObject error);
     }
 }
