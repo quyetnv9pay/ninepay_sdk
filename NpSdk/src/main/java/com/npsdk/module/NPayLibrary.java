@@ -3,7 +3,6 @@ package com.npsdk.module;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
-import android.util.Log;
 import android.webkit.CookieManager;
 import android.webkit.WebStorage;
 import android.widget.Toast;
@@ -18,14 +17,15 @@ import com.npsdk.jetpack_sdk.InputCardActivity;
 import com.npsdk.jetpack_sdk.OrderActivity;
 import com.npsdk.jetpack_sdk.base.AppUtils;
 import com.npsdk.jetpack_sdk.repository.CallbackCreateOrderPaymentMethod;
+import com.npsdk.jetpack_sdk.repository.CallbackListPaymentMethod;
 import com.npsdk.jetpack_sdk.repository.CreatePaymentOrderRepo;
 import com.npsdk.jetpack_sdk.repository.GetInfoMerchant;
+import com.npsdk.jetpack_sdk.repository.RefreshTokenCallback;
 import com.npsdk.jetpack_sdk.repository.model.CreateOrderParamWalletMethod;
 import com.npsdk.jetpack_sdk.repository.model.DataCreateOrderPaymentMethod;
 import com.npsdk.module.api.GetInfoTask;
 import com.npsdk.jetpack_sdk.repository.GetListPaymentMethodRepo;
 import com.npsdk.module.api.GetPublickeyTask;
-import com.npsdk.module.api.RefreshTokenTask;
 import com.npsdk.module.model.SdkConfig;
 import com.npsdk.module.model.UserInfo;
 import com.npsdk.module.utils.*;
@@ -42,6 +42,7 @@ import java.util.UUID;
 
 @SuppressLint("StaticFieldLeak")
 public class NPayLibrary {
+    private static final int MAX_RETRY_COUNT = 2;
     private static final String TAG = NPayLibrary.class.getSimpleName();
     private static NPayLibrary INSTANCE;
     public SdkConfig sdkConfig;
@@ -145,26 +146,21 @@ public class NPayLibrary {
     }
 
     public void getUserInfoSendToPayment(@Nullable Runnable afterSuccess) {
+        _getUserInfoSendToPayment(afterSuccess, 0);
+    }
+
+    private void _getUserInfoSendToPayment(@Nullable Runnable afterSuccess, int retryCount) {
         DataOrder.Companion.setUserInfo(null);
         String token = Preference.getString(activity, Flavor.prefKey + Constants.ACCESS_TOKEN, "");
         String publicKey = Preference.getString(activity, Flavor.prefKey + Constants.PUBLIC_KEY, "");
-        String deviceId = DeviceUtils.getDeviceID(activity);
-        String UID = DeviceUtils.getUniqueID(activity);
         if (token.isEmpty() || publicKey.isEmpty()) return;
         // Get user info
         GetInfoTask getInfoTask = new GetInfoTask(activity, "Bearer " + token, new GetInfoTask.OnGetInfoListener() {
             @Override
             public void onGetInfoSuccess(UserInfo userInfo) {
-                Gson gson = new Gson();
                 Preference.save(activity, NPayLibrary.getInstance().sdkConfig.getEnv() + Constants.PHONE, userInfo.getPhone());
                 DataOrder.Companion.setUserInfo(userInfo);
-                Map<String, Object> userInfoMap = new HashMap<>();
-                userInfoMap.put("phone", userInfo.getPhone());
-                userInfoMap.put("balance", userInfo.getBalance());
-                userInfoMap.put("kycStatus", userInfo.getStatus());
-                userInfoMap.put("name", userInfo.getName());
-                String json = gson.toJson(userInfoMap);
-                listener.getInfoSuccess(json);
+                listener.getInfoSuccess(buildUserInfoJson(userInfo, false));
                 if (afterSuccess != null) {
                     afterSuccess.run();
                 }
@@ -172,50 +168,56 @@ public class NPayLibrary {
 
             @Override
             public void onError(int errorCode, String message) {
-                if (errorCode == Constants.NOT_LOGIN || message.contains("đã hết hạn") || message.toLowerCase().contains("không tìm thấy")) {
-                    refreshToken(deviceId, UID, new Runnable() { // Refresh success
+                if (shouldRefreshToken(errorCode, message, retryCount)) {
+                    refreshToken(new RefreshTokenCallback() {
                         @Override
-                        public void run() {
-                            // Đệ quy
-                            getUserInfoSendToPayment(null);
+                        public void onSuccess() {
+                            _getUserInfoSendToPayment(afterSuccess, retryCount + 1);
+                        }
+
+                        @Override
+                        public void onError(int errorCode, String message) {
+
                         }
                     });
                 }
-
             }
         });
         getInfoTask.execute();
     }
 
     public void getUserInfo() {
+        _getUserInfo(0);
+    }
+
+    private void _getUserInfo(int retryCount) {
         String token = Preference.getString(activity, Flavor.prefKey + Constants.ACCESS_TOKEN, "");
 
         if (token.isEmpty()) {
             listener.onError(Constants.NOT_LOGIN, "Tài khoản chưa được đăng nhập!");
             return;
         }
-        String deviceId = DeviceUtils.getDeviceID(activity);
-        String UID = DeviceUtils.getUniqueID(activity);
-        Log.d(TAG, "device id : " + deviceId + " , UID : " + UID);
         GetInfoTask getInfoTask = new GetInfoTask(activity, "Bearer " + token, new GetInfoTask.OnGetInfoListener() {
             @Override
             public void onGetInfoSuccess(UserInfo userInfo) {
-                Gson gson = new Gson();
                 DataOrder.Companion.setUserInfo(userInfo);
-                Map<String, Object> userInfoMap = new HashMap<>();
-                userInfoMap.put("phone", userInfo.getPhone());
-                userInfoMap.put("balance", userInfo.getBalance());
-                userInfoMap.put("kycStatus", userInfo.getStatus());
-                userInfoMap.put("name", userInfo.getName());
-                userInfoMap.put("banks", userInfo.getBanks());
-                String json = gson.toJson(userInfoMap);
-                listener.getInfoSuccess(json);
+                listener.getInfoSuccess(buildUserInfoJson(userInfo, true));
             }
 
             @Override
             public void onError(int errorCode, String message) {
-                if (errorCode == Constants.NOT_LOGIN || message.contains("đã hết hạn") || message.toLowerCase().contains("không tìm thấy")) {
-                    refreshToken(deviceId, UID, null);
+                if (shouldRefreshToken(errorCode, message, retryCount)) {
+                    refreshToken(new RefreshTokenCallback() {
+                        @Override
+                        public void onSuccess() {
+                            _getUserInfo(retryCount + 1);
+                        }
+
+                        @Override
+                        public void onError(int errorCode, String message) {
+                            listener.onError(errorCode, message);
+                        }
+                    });
                     return;
                 }
                 listener.onError(errorCode, message);
@@ -224,25 +226,10 @@ public class NPayLibrary {
         getInfoTask.execute();
     }
 
-    private void refreshToken(String deviceId, String UID, @Nullable Runnable runnable) {
-        RefreshTokenTask refreshTokenTask = new RefreshTokenTask(activity, deviceId, UID, new RefreshTokenTask.OnRefreshListener() {
-            @Override
-            public void onRefreshSuccess() {
-
-                if (runnable != null) {
-                    runnable.run();
-                } else {
-                    getUserInfo();
-                }
-            }
-
-            @Override
-            public void onError(int errorCode, String message) {
-                listener.onError(errorCode, message);
-
-            }
-        }, Preference.getString(activity, NPayLibrary.getInstance().sdkConfig.getEnv() + Constants.REFRESH_TOKEN));
-        refreshTokenTask.execute();
+    private void refreshToken(@Nullable RefreshTokenCallback refreshTokenCallback) {
+        String deviceId = DeviceUtils.getDeviceID(activity);
+        String UID = DeviceUtils.getUniqueID(activity);
+        TokenManager.refreshTokenIfNeeded(activity, deviceId, UID, refreshTokenCallback);
     }
 
     // Remove cookie, session, phone number and merchant code
@@ -313,7 +300,11 @@ public class NPayLibrary {
         return !Preference.getString(activity, sdkConfig.getEnv() + Constants.ACCESS_TOKEN, "").isEmpty();
     }
 
-    public void getListPaymentMethods(ListPaymentMethodCallback callback) {
+    public void getListPaymentMethods(CallbackListPaymentMethod callback) {
+        _getListPaymentMethods(callback, 0);
+    }
+
+    private void _getListPaymentMethods(CallbackListPaymentMethod callback, int retryCount) {
         String token = Preference.getString(activity, Flavor.prefKey + Constants.ACCESS_TOKEN, "");
         String phone = Preference.getString(activity, sdkConfig.getEnv() + Constants.PHONE, "");
         if (token.isEmpty() || phone.isEmpty()) {
@@ -325,8 +316,27 @@ public class NPayLibrary {
         }
 
         GetListPaymentMethodRepo getListPaymentMethodTask = new GetListPaymentMethodRepo();
-        getListPaymentMethodTask.check(activity, callback);
+        getListPaymentMethodTask.check(activity, response -> {
+            int errorCode = response.has("error_code") ? response.get("error_code").getAsInt() : 0;
+            String message = response.has("message") ? response.get("message").getAsString() : "";
 
+            if (shouldRefreshToken(errorCode, message, retryCount)) {
+                refreshToken(new RefreshTokenCallback() {
+                    @Override
+                    public void onSuccess() {
+                        _getListPaymentMethods(callback, retryCount + 1);
+                    }
+
+                    @Override
+                    public void onError(int errorCode, String message) {
+                        callback.onSuccess(response);
+                    }
+                });
+                return;
+            }
+
+            callback.onSuccess(response);
+        });
     }
 
     public void createOrder(
@@ -338,6 +348,20 @@ public class NPayLibrary {
         @Nullable Map<String, Object> metaData,
         CallbackCreateOrderPaymentMethod callback
     ) {
+        _createOrder(requestId, amount, productName, bType, bInfo, metaData, callback, 0);
+    }
+
+    private void _createOrder(
+        @Nullable String requestId,
+        String amount,
+        String productName,
+        String bType,
+        String bInfo,
+        @Nullable Map<String, Object> metaData,
+        CallbackCreateOrderPaymentMethod callback,
+        int retryCount
+    ) {
+        String _requestId = requestId;
         CallbackCreateOrderPaymentMethod wrappedCallback = new CallbackCreateOrderPaymentMethod() {
             @Override
             public void onSuccess(DataCreateOrderPaymentMethod result) {
@@ -347,6 +371,23 @@ public class NPayLibrary {
 
             @Override
             public void onError(JsonObject error) {
+                int errorCode = error.has("error_code") ? error.get("error_code").getAsInt() : 0;
+                String message = error.has("message") ? error.get("message").getAsString() : "";
+
+                if (shouldRefreshToken(errorCode, message, retryCount)) {
+                    refreshToken(new RefreshTokenCallback() {
+                        @Override
+                        public void onSuccess() {
+                            _createOrder(_requestId, amount, productName, bType, bInfo, metaData, callback, retryCount + 1);
+                        }
+
+                        @Override
+                        public void onError(int errorCode, String message) {
+                            callback.onError(error);
+                        }
+                    });
+                    return;
+                }
                 callback.onError(error);
             }
         };
@@ -408,7 +449,21 @@ public class NPayLibrary {
         return encodedUrl.toString();
     }
 
-    public interface ListPaymentMethodCallback {
-        void onSuccess(JsonObject response);
+    private String buildUserInfoJson(UserInfo userInfo, boolean withBanks) {
+        Gson gson = new Gson();
+        DataOrder.Companion.setUserInfo(userInfo);
+        Map<String, Object> userInfoMap = new HashMap<>();
+        userInfoMap.put("phone", userInfo.getPhone());
+        userInfoMap.put("balance", userInfo.getBalance());
+        userInfoMap.put("kycStatus", userInfo.getStatus());
+        userInfoMap.put("name", userInfo.getName());
+        if (withBanks) {
+            userInfoMap.put("banks", userInfo.getBanks());
+        }
+        return gson.toJson(userInfoMap);
+    }
+
+    private boolean shouldRefreshToken(int errorCode, String message, int retryCount) {
+        return (errorCode == Constants.NOT_LOGIN || message.contains("đã hết hạn") || message.toLowerCase().contains("không tìm thấy")) && retryCount <= MAX_RETRY_COUNT;
     }
 }

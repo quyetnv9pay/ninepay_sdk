@@ -25,7 +25,7 @@ public class GetListPaymentMethodRepo extends BaseApiClient {
     ExecutorService executor = Executors.newSingleThreadExecutor();
     Handler mainThread = new Handler(Looper.getMainLooper());
 
-    public void check(Context context, NPayLibrary.ListPaymentMethodCallback callback) {
+    public void check(Context context, CallbackListPaymentMethod callback) {
         executor.execute(() -> {
             Call<String> call = apiService.getListPaymentMethod();
             enqueue(call, new Callback<String>() {
