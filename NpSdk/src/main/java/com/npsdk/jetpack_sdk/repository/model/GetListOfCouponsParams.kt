@@ -1,6 +1,6 @@
 package com.npsdk.jetpack_sdk.repository.model
 
-data class GetListOfCouponParams (
+data class GetListOfCouponsParams (
     var amount: String?,
     var eventId: String?
 )

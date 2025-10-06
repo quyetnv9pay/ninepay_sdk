@@ -23,9 +23,10 @@ import com.npsdk.jetpack_sdk.repository.CreatePaymentOrderRepo;
 import com.npsdk.jetpack_sdk.repository.GetInfoMerchant;
 import com.npsdk.jetpack_sdk.repository.CuponRepo;
 import com.npsdk.jetpack_sdk.repository.RefreshTokenCallback;
+import com.npsdk.jetpack_sdk.repository.model.CouponInfo;
 import com.npsdk.jetpack_sdk.repository.model.CreateOrderParamWalletMethod;
 import com.npsdk.jetpack_sdk.repository.model.DataCreateOrderPaymentMethod;
-import com.npsdk.jetpack_sdk.repository.model.GetListOfCouponParams;
+import com.npsdk.jetpack_sdk.repository.model.GetListOfCouponsParams;
 import com.npsdk.jetpack_sdk.repository.model.ValidateCouponParams;
 import com.npsdk.module.api.GetInfoTask;
 import com.npsdk.jetpack_sdk.repository.GetListPaymentMethodRepo;
@@ -374,7 +375,8 @@ public class NPayLibrary {
             @Override
             public void onSuccess(DataCreateOrderPaymentMethod result) {
                 callback.onSuccess(result);
-                payOrder(result.getOrderCode(), bType, bInfo, result.getCouponInfo().getId(), result.getCouponInfo().getCode());
+                CouponInfo info = result.getCouponInfo();
+                payOrder(result.getOrderCode(), bType, bInfo, info != null ? info.getId() : null, info != null ? info.getCode() : null);
             }
 
             @Override
@@ -447,15 +449,15 @@ public class NPayLibrary {
         activity.startActivity(intent);
     }
 
-    public void getListOfCoupon(String amount, @Nullable String eventId, BaseCallback callback) {
-        _getListOfCoupon(amount, eventId, callback, 0);
+    public void getListOfCoupons(String amount, @Nullable String eventId, BaseCallback callback) {
+        _getListOfCoupons(amount, eventId, callback, 0);
     }
 
-    private void _getListOfCoupon(String amount, @Nullable String eventId, BaseCallback callback, int retryCount) {
+    private void _getListOfCoupons(String amount, @Nullable String eventId, BaseCallback callback, int retryCount) {
         CuponRepo cuponRepo = new CuponRepo();
-        GetListOfCouponParams getListOfCouponParams = new GetListOfCouponParams(amount, eventId);
+        GetListOfCouponsParams getListOfCouponsParams = new GetListOfCouponsParams(amount, eventId);
 
-        cuponRepo.getListOfCoupon(activity, getListOfCouponParams, new BaseCallback() {
+        cuponRepo.getListOfCoupons(activity, getListOfCouponsParams, new BaseCallback() {
             @Override
             public void onSuccess(JsonObject response) {
                 int errorCode = response.has("error_code") ? response.get("error_code").getAsInt() : 0;
@@ -465,7 +467,7 @@ public class NPayLibrary {
                     refreshToken(new RefreshTokenCallback() {
                         @Override
                         public void onSuccess() {
-                            _getListOfCoupon(amount, eventId, callback, retryCount + 1);
+                            _getListOfCoupons(amount, eventId, callback, retryCount + 1);
                         }
 
                         @Override

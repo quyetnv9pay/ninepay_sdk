@@ -6,18 +6,15 @@ import android.os.Looper;
 
 import androidx.annotation.NonNull;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.npsdk.jetpack_sdk.base.api.BaseApiClient;
 import com.npsdk.jetpack_sdk.base.api.EncryptServiceHelper;
-import com.npsdk.jetpack_sdk.repository.model.GetListOfCouponParams;
+import com.npsdk.jetpack_sdk.repository.model.GetListOfCouponsParams;
 import com.npsdk.jetpack_sdk.repository.model.ValidateCouponParams;
 import com.npsdk.module.utils.JsonUtils;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -28,9 +25,9 @@ public class CuponRepo extends BaseApiClient {
     ExecutorService executor = Executors.newSingleThreadExecutor();
     Handler mainThread = new Handler(Looper.getMainLooper());
 
-    public void getListOfCoupon(Context context, GetListOfCouponParams listOfCouponParams, BaseCallback callback) {
+    public void getListOfCoupons(Context context, GetListOfCouponsParams listOfCouponParams, BaseCallback callback) {
         executor.execute(() -> {
-            Call<String> call = apiService.getListOfCoupon(listOfCouponParams.getAmount(), listOfCouponParams.getEventId());
+            Call<String> call = apiService.getListOfCoupons(listOfCouponParams.getAmount(), listOfCouponParams.getEventId());
             enqueue(call, new Callback<String>() {
                 @Override
                 public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {

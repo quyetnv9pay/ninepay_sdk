@@ -62,7 +62,7 @@ public interface ApiService {
     );
 
     @GET("/sdk/v2/wallet/coupon")
-    Call<String> getListOfCoupon(
+    Call<String> getListOfCoupons(
         @Query("amount") String amount,
         @Query("event_id") String eventId
     );
