@@ -36,6 +36,12 @@ public class CreatePaymentOrderRepo extends BaseApiClient {
         mapEncrypt.put("product_name", param.getProductName());
         mapEncrypt.put("request_id", param.getRequestId());
         mapEncrypt.put("merchant_code", param.getMerchantCode());
+        if (param.getCouponId() != null) {
+            mapEncrypt.put("coupon_id", String.valueOf(param.getCouponId()));
+        }
+        if (param.getCoupon() != null) {
+            mapEncrypt.put("coupon", param.getCoupon());
+        }
         // meta_data (JSON object)
         if (param.getMetaData() != null && !param.getMetaData().isEmpty()) {
             String metaDataJson = new Gson().toJson(param.getMetaData());
@@ -58,6 +64,7 @@ public class CreatePaymentOrderRepo extends BaseApiClient {
                         String objectDecrypt = EncryptServiceHelper.INSTANCE.decryptAesBase64(
                                 response.body(),
                                 EncryptServiceHelper.INSTANCE.getRandomkeyRaw());
+                        System.out.println(objectDecrypt);
                         Gson gson = new Gson();
                         CreateOrderPaymentMethodModel createOrderCardModel = gson.fromJson(objectDecrypt, CreateOrderPaymentMethodModel.class);
                         mainThread.post(() -> {

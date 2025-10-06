@@ -16,13 +16,17 @@ import com.npsdk.jetpack_sdk.DataOrder;
 import com.npsdk.jetpack_sdk.InputCardActivity;
 import com.npsdk.jetpack_sdk.OrderActivity;
 import com.npsdk.jetpack_sdk.base.AppUtils;
+import com.npsdk.jetpack_sdk.repository.BaseCallback;
 import com.npsdk.jetpack_sdk.repository.CallbackCreateOrderPaymentMethod;
 import com.npsdk.jetpack_sdk.repository.CallbackListPaymentMethod;
 import com.npsdk.jetpack_sdk.repository.CreatePaymentOrderRepo;
 import com.npsdk.jetpack_sdk.repository.GetInfoMerchant;
+import com.npsdk.jetpack_sdk.repository.CuponRepo;
 import com.npsdk.jetpack_sdk.repository.RefreshTokenCallback;
 import com.npsdk.jetpack_sdk.repository.model.CreateOrderParamWalletMethod;
 import com.npsdk.jetpack_sdk.repository.model.DataCreateOrderPaymentMethod;
+import com.npsdk.jetpack_sdk.repository.model.GetListOfCouponParams;
+import com.npsdk.jetpack_sdk.repository.model.ValidateCouponParams;
 import com.npsdk.module.api.GetInfoTask;
 import com.npsdk.jetpack_sdk.repository.GetListPaymentMethodRepo;
 import com.npsdk.module.api.GetPublickeyTask;
@@ -345,10 +349,12 @@ public class NPayLibrary {
         String productName,
         String bType,
         String bInfo,
+        @Nullable Integer couponId,
+        @Nullable String coupon,
         @Nullable Map<String, Object> metaData,
         CallbackCreateOrderPaymentMethod callback
     ) {
-        _createOrder(requestId, amount, productName, bType, bInfo, metaData, callback, 0);
+        _createOrder(requestId, amount, productName, bType, bInfo, couponId, coupon, metaData, callback, 0);
     }
 
     private void _createOrder(
@@ -357,6 +363,8 @@ public class NPayLibrary {
         String productName,
         String bType,
         String bInfo,
+        @Nullable Integer couponId,
+        @Nullable String coupon,
         @Nullable Map<String, Object> metaData,
         CallbackCreateOrderPaymentMethod callback,
         int retryCount
@@ -366,7 +374,7 @@ public class NPayLibrary {
             @Override
             public void onSuccess(DataCreateOrderPaymentMethod result) {
                 callback.onSuccess(result);
-                payOrder(result.getOrderCode(), bType, bInfo);
+                payOrder(result.getOrderCode(), bType, bInfo, result.getCouponInfo().getId(), result.getCouponInfo().getCode());
             }
 
             @Override
@@ -378,7 +386,7 @@ public class NPayLibrary {
                     refreshToken(new RefreshTokenCallback() {
                         @Override
                         public void onSuccess() {
-                            _createOrder(_requestId, amount, productName, bType, bInfo, metaData, callback, retryCount + 1);
+                            _createOrder(_requestId, amount, productName, bType, bInfo, couponId, coupon, metaData, callback, retryCount + 1);
                         }
 
                         @Override
@@ -403,6 +411,8 @@ public class NPayLibrary {
             productName,
             requestId,
             sdkConfig.getMerchantCode(),
+            couponId,
+            coupon,
             metaData
         );
         createPaymentOrderRepo.check(activity, param, wrappedCallback);
@@ -411,21 +421,95 @@ public class NPayLibrary {
     public void payOrder(
         String orderId,
         String bType,
-        String bInfo
+        String bInfo,
+        @Nullable Integer couponId,
+        @Nullable String coupon
     ) {
         Intent intent = new Intent(activity, NPayActivity.class);
 
         String endpoint = "payment";
-        Map<String, String> params = Map.of(
-        "order_id", orderId,
-        "b_type", bType,
-        "b_info", bInfo
-        );
+        Map<String, String> params = new HashMap<>(Map.of(
+            "order_id", orderId,
+            "b_type", bType,
+            "b_info", bInfo
+        ));
+
+        if (couponId != null) {
+            params.put("coupon_id", String.valueOf(couponId));
+        }
+        if (coupon != null) {
+            params.put("coupon", coupon);
+        }
 
         String encodedUrl = encodeEndpoint(endpoint, params);
         String data = NPayLibrary.getInstance().walletData(encodedUrl);
         intent.putExtra("data", data);
         activity.startActivity(intent);
+    }
+
+    public void getListOfCoupon(String amount, @Nullable String eventId, BaseCallback callback) {
+        _getListOfCoupon(amount, eventId, callback, 0);
+    }
+
+    private void _getListOfCoupon(String amount, @Nullable String eventId, BaseCallback callback, int retryCount) {
+        CuponRepo cuponRepo = new CuponRepo();
+        GetListOfCouponParams getListOfCouponParams = new GetListOfCouponParams(amount, eventId);
+
+        cuponRepo.getListOfCoupon(activity, getListOfCouponParams, new BaseCallback() {
+            @Override
+            public void onSuccess(JsonObject response) {
+                int errorCode = response.has("error_code") ? response.get("error_code").getAsInt() : 0;
+                String message = response.has("message") ? response.get("message").getAsString() : "";
+
+                if (shouldRefreshToken(errorCode, message, retryCount)) {
+                    refreshToken(new RefreshTokenCallback() {
+                        @Override
+                        public void onSuccess() {
+                            _getListOfCoupon(amount, eventId, callback, retryCount + 1);
+                        }
+
+                        @Override
+                        public void onError(int errorCode, String message) {
+                            callback.onSuccess(response);
+                        }
+                    });
+                    return;
+                }
+
+                callback.onSuccess(response);
+            }
+        });
+    }
+
+    public void validateCoupon(String amount, @Nullable Integer couponId, @Nullable String coupon, @Nullable String eventId, BaseCallback callback) {
+        _validateCoupon(amount, couponId, coupon, eventId, callback, 0);
+    }
+
+    private void _validateCoupon(String amount, @Nullable Integer couponId, @Nullable String coupon, @Nullable String eventId, BaseCallback callback, int retryCount) {
+        CuponRepo cuponRepo = new CuponRepo();
+        ValidateCouponParams params = new ValidateCouponParams(amount, couponId, coupon, eventId);
+
+        cuponRepo.validateCoupon(activity, params, response -> {
+            int errorCode = response.has("error_code") ? response.get("error_code").getAsInt() : 0;
+            String message = response.has("message") ? response.get("message").getAsString() : "";
+
+            if (shouldRefreshToken(errorCode, message, retryCount)) {
+                refreshToken(new RefreshTokenCallback() {
+                    @Override
+                    public void onSuccess() {
+                        _validateCoupon(amount, couponId, coupon, eventId, callback, retryCount + 1);
+                    }
+
+                    @Override
+                    public void onError(int errorCode, String message) {
+                        callback.onSuccess(response);
+                    }
+                });
+                return;
+            }
+
+            callback.onSuccess(response);
+        });
     }
 
     public static String encodeEndpoint(String endpoint, Map<String, String> params) {

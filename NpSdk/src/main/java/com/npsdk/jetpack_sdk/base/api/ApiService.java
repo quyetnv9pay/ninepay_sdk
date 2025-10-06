@@ -57,7 +57,22 @@ public interface ApiService {
     @FormUrlEncoded
     @POST("/sdk/api/v1/merchant/create-order")
     Call<String> createOrder(
-            @Header("Device-Id") String deviceId,
-            @Field("data_encrypt") String data
+        @Header("Device-Id") String deviceId,
+        @Field("data_encrypt") String data
+    );
+
+    @GET("/sdk/v2/wallet/coupon")
+    Call<String> getListOfCoupon(
+        @Query("amount") String amount,
+        @Query("event_id") String eventId
+    );
+
+    @FormUrlEncoded
+    @POST("/sdk/v2/coupon/paygate/validate")
+    Call<String> validateCoupon(
+        @Field("amount") String amount,
+        @Field("coupon_id") Integer couponId,
+        @Field("coupon") String coupon,
+        @Field("event_id") String eventId
     );
 }

@@ -16,4 +16,13 @@ class DataCreateOrderPaymentMethod (
     @SerializedName("title") var title: String? = null,
     @SerializedName("desc") var desc: String? = null,
     @SerializedName("amount") var amount: String? = null,
+    @SerializedName("coupon_info") var couponInfo: CouponInfo? = CouponInfo()
+)
+
+class CouponInfo (
+    @SerializedName("id") var id: Int? = null,
+    @SerializedName("code") var code: String? = null,
+    @SerializedName("name") var name: String? = null,
+    @SerializedName("banner") var banner: String? = null,
+    @SerializedName("description") var description: String? = null,
 )

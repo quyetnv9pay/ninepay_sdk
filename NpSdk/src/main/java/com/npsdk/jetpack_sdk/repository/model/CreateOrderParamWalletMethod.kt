@@ -5,5 +5,7 @@ data class CreateOrderParamWalletMethod (
     var productName: String? = "",
     var requestId: String? = "",
     var merchantCode: String? = "",
+    var couponId: Int?,
+    var coupon: String?,
     var metaData: Map<String, Any>? = emptyMap()
 )
