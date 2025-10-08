@@ -42,13 +42,13 @@ public class CuponRepo extends BaseApiClient {
                                 callback.onSuccess(result);
                             });
                         } catch (JsonSyntaxException e) {
-                            callback.onSuccess(JsonUtils.wrapWithDefault(
+                            callback.onError(JsonUtils.wrapWithDefault(
                                     "Lỗi không xác định",
                                     2005
                             ));
                         }
                     } else {
-                        callback.onSuccess(JsonUtils.wrapWithDefault(
+                        callback.onError(JsonUtils.wrapWithDefault(
                                 response.message(),
                                 response.code())
                         );
@@ -57,7 +57,7 @@ public class CuponRepo extends BaseApiClient {
 
                 @Override
                 public void onFailure(Call<String> call, Throwable t) {
-                    callback.onSuccess(
+                    callback.onError(
                             JsonUtils.wrapWithDefault(t.getMessage(), 2005));
                 }
             });
@@ -81,13 +81,13 @@ public class CuponRepo extends BaseApiClient {
                                 callback.onSuccess(result);
                             });
                         } catch (JsonSyntaxException e) {
-                            callback.onSuccess(JsonUtils.wrapWithDefault(
+                            callback.onError(JsonUtils.wrapWithDefault(
                                     "Lỗi không xác định",
                                     2005
                             ));
                         }
                     } else {
-                        callback.onSuccess(JsonUtils.wrapWithDefault(
+                        callback.onError(JsonUtils.wrapWithDefault(
                                 response.message(),
                                 response.code())
                         );
@@ -96,7 +96,7 @@ public class CuponRepo extends BaseApiClient {
 
                 @Override
                 public void onFailure(Call<String> call, Throwable t) {
-                    callback.onSuccess(
+                    callback.onError(
                             JsonUtils.wrapWithDefault(t.getMessage(), 2005));
                 }
             });

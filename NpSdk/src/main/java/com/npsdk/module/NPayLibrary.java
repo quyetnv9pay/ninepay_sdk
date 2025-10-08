@@ -472,13 +472,24 @@ public class NPayLibrary {
 
                         @Override
                         public void onError(int errorCode, String message) {
-                            callback.onSuccess(response);
+                            callback.onError(JsonUtils.wrapWithDefault(
+                                message,
+                                errorCode
+                            ));
                         }
                     });
                     return;
                 }
 
-                callback.onSuccess(response);
+                if (isSuccess(errorCode)) {
+                    callback.onSuccess(response);
+                } else {
+                    callback.onError(response);
+                }
+            }
+            @Override
+            public void onError(JsonObject response) {
+                callback.onError(response);
             }
         });
     }
@@ -491,26 +502,41 @@ public class NPayLibrary {
         CuponRepo cuponRepo = new CuponRepo();
         ValidateCouponParams params = new ValidateCouponParams(amount, couponId, coupon, eventId);
 
-        cuponRepo.validateCoupon(activity, params, response -> {
-            int errorCode = response.has("error_code") ? response.get("error_code").getAsInt() : 0;
-            String message = response.has("message") ? response.get("message").getAsString() : "";
+        cuponRepo.validateCoupon(activity, params, new BaseCallback() {
+            @Override
+            public void onSuccess(JsonObject response) {
+                int errorCode = response.has("error_code") ? response.get("error_code").getAsInt() : 0;
+                String message = response.has("message") ? response.get("message").getAsString() : "";
 
-            if (shouldRefreshToken(errorCode, message, retryCount)) {
-                refreshToken(new RefreshTokenCallback() {
-                    @Override
-                    public void onSuccess() {
-                        _validateCoupon(amount, couponId, coupon, eventId, callback, retryCount + 1);
-                    }
+                if (shouldRefreshToken(errorCode, message, retryCount)) {
+                    refreshToken(new RefreshTokenCallback() {
+                        @Override
+                        public void onSuccess() {
+                            _validateCoupon(amount, couponId, coupon, eventId, callback, retryCount + 1);
+                        }
 
-                    @Override
-                    public void onError(int errorCode, String message) {
-                        callback.onSuccess(response);
-                    }
-                });
-                return;
+                        @Override
+                        public void onError(int errorCode, String message) {
+                            callback.onError(JsonUtils.wrapWithDefault(
+                                message,
+                                errorCode
+                            ));
+                        }
+                    });
+                    return;
+                }
+
+                if (isSuccess(errorCode)) {
+                    callback.onSuccess(response);
+                } else {
+                    callback.onError(response);
+                }
             }
 
-            callback.onSuccess(response);
+            @Override
+            public void onError(JsonObject response) {
+                callback.onError(response);
+            }
         });
     }
 
@@ -551,5 +577,9 @@ public class NPayLibrary {
 
     private boolean shouldRefreshToken(int errorCode, String message, int retryCount) {
         return (errorCode == Constants.NOT_LOGIN || message.contains("đã hết hạn") || message.toLowerCase().contains("không tìm thấy")) && retryCount <= MAX_RETRY_COUNT;
+    }
+
+    private boolean isSuccess(int errorCode) {
+        return errorCode == 0;
     }
 }
