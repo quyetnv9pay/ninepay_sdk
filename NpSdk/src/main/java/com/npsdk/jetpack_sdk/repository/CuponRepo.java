@@ -43,8 +43,8 @@ public class CuponRepo extends BaseApiClient {
                             });
                         } catch (JsonSyntaxException e) {
                             callback.onError(JsonUtils.wrapWithDefault(
-                                    "Lỗi không xác định",
-                                    2005
+                                "WRONG WITH JSON DECODE",
+                                2004
                             ));
                         }
                     } else {
@@ -82,8 +82,8 @@ public class CuponRepo extends BaseApiClient {
                             });
                         } catch (JsonSyntaxException e) {
                             callback.onError(JsonUtils.wrapWithDefault(
-                                    "Lỗi không xác định",
-                                    2005
+                                "WRONG WITH JSON DECODE",
+                                2004
                             ));
                         }
                     } else {

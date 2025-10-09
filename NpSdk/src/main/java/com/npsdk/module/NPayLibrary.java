@@ -461,7 +461,16 @@ public class NPayLibrary {
             @Override
             public void onSuccess(JsonObject response) {
                 int errorCode = response.has("error_code") ? response.get("error_code").getAsInt() : 0;
-                String message = response.has("message") ? response.get("message").getAsString() : "";
+                if (isSuccess(errorCode)) {
+                    callback.onSuccess(response);
+                } else {
+                    callback.onError(response);
+                }
+            }
+            @Override
+            public void onError(JsonObject error) {
+                int errorCode = error.has("error_code") ? error.get("error_code").getAsInt() : 0;
+                String message = error.has("message") ? error.get("message").getAsString() : "";
 
                 if (shouldRefreshToken(errorCode, message, retryCount)) {
                     refreshToken(new RefreshTokenCallback() {
@@ -472,24 +481,12 @@ public class NPayLibrary {
 
                         @Override
                         public void onError(int errorCode, String message) {
-                            callback.onError(JsonUtils.wrapWithDefault(
-                                message,
-                                errorCode
-                            ));
+                            callback.onError(error);
                         }
                     });
                     return;
                 }
-
-                if (isSuccess(errorCode)) {
-                    callback.onSuccess(response);
-                } else {
-                    callback.onError(response);
-                }
-            }
-            @Override
-            public void onError(JsonObject response) {
-                callback.onError(response);
+                callback.onError(error);
             }
         });
     }
@@ -534,8 +531,25 @@ public class NPayLibrary {
             }
 
             @Override
-            public void onError(JsonObject response) {
-                callback.onError(response);
+            public void onError(JsonObject error) {
+                int errorCode = error.has("error_code") ? error.get("error_code").getAsInt() : 0;
+                String message = error.has("message") ? error.get("message").getAsString() : "";
+
+                if (shouldRefreshToken(errorCode, message, retryCount)) {
+                    refreshToken(new RefreshTokenCallback() {
+                        @Override
+                        public void onSuccess() {
+                            _validateCoupon(amount, couponId, coupon, eventId, callback, retryCount + 1);
+                        }
+
+                        @Override
+                        public void onError(int errorCode, String message) {
+                            callback.onError(error);
+                        }
+                    });
+                    return;
+                }
+                callback.onError(error);
             }
         });
     }
