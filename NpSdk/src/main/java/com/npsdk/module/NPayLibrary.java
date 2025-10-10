@@ -457,7 +457,7 @@ public class NPayLibrary {
         CuponRepo cuponRepo = new CuponRepo();
         GetListOfCouponsParams getListOfCouponsParams = new GetListOfCouponsParams(amount, eventId);
 
-        cuponRepo.getListOfCoupons(activity, getListOfCouponsParams, new BaseCallback() {
+        cuponRepo.getListOfCoupons(getListOfCouponsParams, new BaseCallback() {
             @Override
             public void onSuccess(JsonObject response) {
                 int errorCode = response.has("error_code") ? response.get("error_code").getAsInt() : 0;
@@ -499,7 +499,7 @@ public class NPayLibrary {
         CuponRepo cuponRepo = new CuponRepo();
         ValidateCouponParams params = new ValidateCouponParams(amount, couponId, coupon, eventId);
 
-        cuponRepo.validateCoupon(activity, params, new BaseCallback() {
+        cuponRepo.validateCoupon(params, new BaseCallback() {
             @Override
             public void onSuccess(JsonObject response) {
                 int errorCode = response.has("error_code") ? response.get("error_code").getAsInt() : 0;
