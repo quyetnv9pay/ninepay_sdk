@@ -20,8 +20,19 @@ if (isJitpack) {
         }
     }
 
-    tasks.named("preBuild").configure {
-        dependsOn("prepareLocalAar")
+    // 🛑 KẾT NỐI TASK VÀO PHASE CONFIGURATION (CÁCH ÉP BUỘC)
+    // Cần phải buộc task copy chạy trước khi Gradle tìm kiếm dependency.
+    configurations.all {
+        resolutionStrategy {
+            // Sử dụng một trick để ép chạy task 'prepareLocalAar' ngay khi Gradle cố gắng
+            // giải quyết bất kỳ dependency nào trong khối này.
+            eachDependency {
+                if (it.requested.group == 'vn.ninepay' && it.requested.name == 'encryptservice') {
+                    // Cố gắng lấy task và ép nó chạy ngay lập tức
+                    tasks.named('prepareLocalAar').get().execute()
+                }
+            }
+        }
     }
 }
 
