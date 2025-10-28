@@ -16,6 +16,8 @@ import com.npsdk.jetpack_sdk.DataOrder;
 import com.npsdk.jetpack_sdk.InputCardActivity;
 import com.npsdk.jetpack_sdk.OrderActivity;
 import com.npsdk.jetpack_sdk.base.AppUtils;
+import vn.ninepay.sdk.encryptservice.EncryptService;
+import com.npsdk.jetpack_sdk.base.api.NPayEncryptDataProvider;
 import com.npsdk.jetpack_sdk.repository.BaseCallback;
 import com.npsdk.jetpack_sdk.repository.CallbackCreateOrderPaymentMethod;
 import com.npsdk.jetpack_sdk.repository.CallbackListPaymentMethod;
@@ -82,6 +84,11 @@ public class NPayLibrary {
             GetPublickeyTask getPublickeyTask = new GetPublickeyTask(activity);
             getPublickeyTask.execute();
         }
+
+        NPayEncryptDataProvider dataProvider = new NPayEncryptDataProvider();
+
+        // Khởi tạo EncryptService của AAR
+        EncryptService.INSTANCE.initialize(dataProvider);
     }
 
     public boolean isLogOut(SdkConfig sdkConfig) {

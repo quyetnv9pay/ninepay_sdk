@@ -8,7 +8,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.npsdk.jetpack_sdk.base.api.BaseApiClient;
-import com.npsdk.jetpack_sdk.base.api.EncryptServiceHelper;
+import vn.ninepay.sdk.encryptservice.EncryptService;
 import com.npsdk.jetpack_sdk.repository.model.VerifyPaymentModel;
 import com.npsdk.module.NPayLibrary;
 import retrofit2.Call;
@@ -30,9 +30,9 @@ public class VerifyPayment extends BaseApiClient {
                 @Override
                 public void onResponse(Call<String> call, Response<String> response) {
                     if (response.code() == 200 && response.body() != null) {
-                        String objectDecrypt = EncryptServiceHelper.INSTANCE.decryptAesBase64(
+                        String objectDecrypt = EncryptService.INSTANCE.decryptAesBase64(
                                 response.body(),
-                                EncryptServiceHelper.INSTANCE.getRandomkeyRaw()
+                                EncryptService.INSTANCE.getRandomkeyRaw()
                         );
                         Gson gson = new GsonBuilder().setPrettyPrinting().create();
                         try {

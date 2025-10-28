@@ -10,8 +10,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.npsdk.jetpack_sdk.base.api.BaseApiClient;
-import com.npsdk.jetpack_sdk.base.api.EncryptServiceHelper;
-import com.npsdk.module.NPayLibrary;
 import com.npsdk.module.utils.JsonUtils;
 
 import java.util.concurrent.ExecutorService;
@@ -20,6 +18,7 @@ import java.util.concurrent.Executors;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import vn.ninepay.sdk.encryptservice.EncryptService;
 
 public class GetListPaymentMethodRepo extends BaseApiClient {
     ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -32,9 +31,9 @@ public class GetListPaymentMethodRepo extends BaseApiClient {
                 @Override
                 public void onResponse(@NonNull Call<String> call, @NonNull Response<String> response) {
                     if (response.code() == 200 && response.body() != null) {
-                        String objectDecrypt = EncryptServiceHelper.INSTANCE.decryptAesBase64(
+                        String objectDecrypt = EncryptService.INSTANCE.decryptAesBase64(
                                 response.body(),
-                                EncryptServiceHelper.INSTANCE.getRandomkeyRaw()
+                                EncryptService.INSTANCE.getRandomkeyRaw()
                         );
                         try {
                             JsonObject result = JsonParser.parseString(objectDecrypt).getAsJsonObject();

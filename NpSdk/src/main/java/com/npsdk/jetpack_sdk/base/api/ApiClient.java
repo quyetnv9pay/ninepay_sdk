@@ -11,6 +11,7 @@ import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.converter.scalars.ScalarsConverterFactory;
+import vn.ninepay.sdk.encryptservice.EncryptService;
 
 import java.net.CookieManager;
 import java.net.CookiePolicy;
@@ -53,7 +54,7 @@ public class ApiClient {
                         .addHeader("platform", "android")
                         .addHeader("is-new-sdk", "true")
                         .addHeader("Secret-Key", NPayLibrary.getInstance().sdkConfig.getSecretKey());
-                String Rke = EncryptServiceHelper.INSTANCE.getRandomkeyEncrypt();
+                String Rke = EncryptService.INSTANCE.getRandomkeyEncrypt();
                 if (getToken() != null && Rke != null) {
                     builder.addHeader("Authorization", getToken()).addHeader("Rke", Rke);
                 } else if (Rke != null) {

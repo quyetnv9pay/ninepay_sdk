@@ -8,7 +8,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.npsdk.jetpack_sdk.base.api.BaseApiClient;
-import com.npsdk.jetpack_sdk.base.api.EncryptServiceHelper;
 import com.npsdk.jetpack_sdk.repository.model.CreateOrderCardModel;
 import com.npsdk.jetpack_sdk.repository.model.CreateOrderParamsInter;
 import com.npsdk.module.NPayLibrary;
@@ -16,6 +15,7 @@ import org.bouncycastle.util.encoders.DecoderException;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import vn.ninepay.sdk.encryptservice.EncryptService;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,7 +31,7 @@ public class CreateOrderInterRepo extends BaseApiClient {
         executor.execute(() -> {
             // Remove space
             param.setCardNumber(param.getCardNumber().replaceAll(" ", ""));
-            String key = EncryptServiceHelper.INSTANCE.getRandomkeyRaw();
+            String key = EncryptService.INSTANCE.getRandomkeyRaw();
 
             Map<String, String> mapEncrypt = new HashMap<>();
             mapEncrypt.put("data", param.getUrl());
@@ -46,7 +46,7 @@ public class CreateOrderInterRepo extends BaseApiClient {
 
             String jsonRaw = new Gson().toJson(mapEncrypt);
             System.out.println(jsonRaw);
-            String jsonString = EncryptServiceHelper.INSTANCE.encryptKeyAesBase64(jsonRaw, key);
+            String jsonString = EncryptService.INSTANCE.encryptKeyAesBase64(jsonRaw, key);
 
             Call<String> call = apiService.createOrderCardInter(key, jsonString);
             enqueue(call, new Callback<String>() {
@@ -54,9 +54,9 @@ public class CreateOrderInterRepo extends BaseApiClient {
                 public void onResponse(Call<String> call, Response<String> response) {
                     if (response.code() == 200 && response.body() != null) {
                         try {
-                            String objectDecrypt = EncryptServiceHelper.INSTANCE.decryptAesBase64(
+                            String objectDecrypt = EncryptService.INSTANCE.decryptAesBase64(
                                     response.body(),
-                                    EncryptServiceHelper.INSTANCE.getRandomkeyRaw());
+                                    EncryptService.INSTANCE.getRandomkeyRaw());
                             Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
                             CreateOrderCardModel createOrderCardModel = gson.fromJson(objectDecrypt, CreateOrderCardModel.class);
