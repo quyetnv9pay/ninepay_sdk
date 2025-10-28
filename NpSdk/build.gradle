@@ -16,28 +16,12 @@ if (isJitpack) {
         into(localMavenDir.map { it.dir("vn/ninepay/encryptservice/1.0.0") })
         rename { "encryptservice-1.0.0.aar" }
         doLast {
-            println("✅ Copied EncryptService.aar to local Maven: " + localMavenDir.get().asFile.absolutePath)
+            println("✅ Copied EncryptService.aar to local Maven.")
         }
     }
 
-    repositories {
-        maven { url = localMavenDir }
-        google()
-        mavenCentral()
-        maven { url 'https://maven.google.com/' }
-        maven { url "https://jitpack.io" }
-    }
-
-    // Đảm bảo task copy chạy trước compile
     tasks.named("preBuild").configure {
         dependsOn("prepareLocalAar")
-    }
-} else {
-    repositories {
-        google()
-        mavenCentral()
-        maven { url 'https://maven.google.com/' }
-        maven { url "https://jitpack.io" }
     }
 }
 
@@ -96,6 +80,19 @@ android {
     }
 }
 
+repositories {
+    google()
+    mavenCentral()
+    maven { url 'https://maven.google.com/' }
+    maven { url "https://jitpack.io" }
+
+    // Thêm repository cục bộ chỉ khi trên JitPack
+    if (isJitpack) {
+        maven { url = layout.buildDirectory.dir("localMaven") }
+    }
+}
+
+
 dependencies {
     def compose_ui_version = "1.4.3"
 
@@ -143,7 +140,7 @@ dependencies {
     }
     implementation 'co.hyperverge:hyperkyc:0.47.3'
     implementation "co.hyperverge:hvnfc-sdk:3.0.0"
-    // ✅ Check mode
+    // Check mode
     if (isJitpack) {
         implementation 'vn.ninepay:encryptservice:1.0.0'
     } else {
