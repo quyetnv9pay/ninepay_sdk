@@ -4,12 +4,41 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
-repositories {
-    google()
-    mavenCentral()
-    maven { url 'https://maven.google.com/' }
-    gradlePluginPortal()
-    maven { url "https://jitpack.io" }
+def isJitpack = System.getenv("JITPACK") == "true"
+println("🏗️  Build mode: " + (isJitpack ? "JITPACK" : "LOCAL"))
+
+if (isJitpack) {
+    // Khi build trên JitPack: chuẩn bị local Maven repo
+    def localMavenDir = layout.buildDirectory.dir("localMaven")
+
+    tasks.register("prepareLocalAar", Copy) {
+        from("$projectDir/libs/EncryptService.aar")
+        into(localMavenDir.map { it.dir("vn/ninepay/encryptservice/1.0.0") })
+        rename { "encryptservice-1.0.0.aar" }
+        doLast {
+            println("✅ Copied EncryptService.aar to local Maven: " + localMavenDir.get().asFile.absolutePath)
+        }
+    }
+
+    repositories {
+        maven { url = localMavenDir }
+        google()
+        mavenCentral()
+        maven { url 'https://maven.google.com/' }
+        maven { url "https://jitpack.io" }
+    }
+
+    // Đảm bảo task copy chạy trước compile
+    tasks.named("preBuild").configure {
+        dependsOn("prepareLocalAar")
+    }
+} else {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://maven.google.com/' }
+        maven { url "https://jitpack.io" }
+    }
 }
 
 android {
@@ -114,7 +143,12 @@ dependencies {
     }
     implementation 'co.hyperverge:hyperkyc:0.47.3'
     implementation "co.hyperverge:hvnfc-sdk:3.0.0"
-    implementation files('libs/EncryptService.aar')
+    // ✅ Check mode
+    if (isJitpack) {
+        implementation 'vn.ninepay:encryptservice:1.0.0'
+    } else {
+        implementation files('libs/EncryptService.aar')
+    }
 }
 
 afterEvaluate {
