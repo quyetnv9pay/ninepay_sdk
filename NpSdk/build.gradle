@@ -4,14 +4,6 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
-repositories {
-    google()
-    mavenCentral()
-    maven { url 'https://maven.google.com/' }
-    gradlePluginPortal()
-    maven { url "https://jitpack.io" }
-}
-
 android {
     compileSdk 34
     namespace 'com.npsdk'
@@ -67,6 +59,14 @@ android {
     }
 }
 
+repositories {
+    google()
+    mavenCentral()
+    maven { url 'https://maven.google.com/' }
+    maven { url "https://jitpack.io" }
+}
+
+
 dependencies {
     def compose_ui_version = "1.4.3"
 
@@ -111,9 +111,10 @@ dependencies {
     // Ensure the older version is not included
     configurations.all {
         exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
-    } 
+    }
     implementation 'co.hyperverge:hyperkyc:0.47.3'
     implementation "co.hyperverge:hvnfc-sdk:3.0.0"
+    implementation 'com.github.quyetnv9pay:encrypt-arr:1.0.5'
 }
 
 afterEvaluate {

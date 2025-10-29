@@ -2,7 +2,6 @@ package com.npsdk.module.api;
 
 import android.content.Context;
 import com.npsdk.jetpack_sdk.base.api.CustomInterceptor;
-import com.npsdk.jetpack_sdk.base.api.EncryptServiceHelper;
 import com.npsdk.jetpack_sdk.repository.model.PublickeyModel;
 import com.npsdk.module.NPayLibrary;
 import com.npsdk.module.model.ActionMerchantResponse;
@@ -16,6 +15,7 @@ import retrofit2.Call;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.*;
+import vn.ninepay.sdk.encryptservice.EncryptService;
 
 import java.net.CookieManager;
 import java.net.CookiePolicy;
@@ -79,7 +79,7 @@ public class RestfulApi {
     }
 
     public Call<PublickeyModel> GetPublickeyTask() {
-        String uniqueID = EncryptServiceHelper.INSTANCE.getRandomkeyRaw();
+        String uniqueID = EncryptService.INSTANCE.getRandomkeyRaw();
         return restService.getPublickey(uniqueID);
     }
 
