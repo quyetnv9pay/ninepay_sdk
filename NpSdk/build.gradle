@@ -63,9 +63,9 @@ repositories {
     google()
     mavenCentral()
     maven { url 'https://maven.google.com/' }
+    gradlePluginPortal()
     maven { url "https://jitpack.io" }
 }
-
 
 dependencies {
     def compose_ui_version = "1.4.3"

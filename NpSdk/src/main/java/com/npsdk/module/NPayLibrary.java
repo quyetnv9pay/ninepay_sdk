@@ -16,6 +16,7 @@ import com.npsdk.jetpack_sdk.DataOrder;
 import com.npsdk.jetpack_sdk.InputCardActivity;
 import com.npsdk.jetpack_sdk.OrderActivity;
 import com.npsdk.jetpack_sdk.base.AppUtils;
+import com.npsdk.jetpack_sdk.base.api.NPayEncryptDataProvider;
 import com.npsdk.jetpack_sdk.repository.BaseCallback;
 import com.npsdk.jetpack_sdk.repository.CallbackCreateOrderPaymentMethod;
 import com.npsdk.jetpack_sdk.repository.CallbackListPaymentMethod;
@@ -43,6 +44,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+
+import vn.ninepay.sdk.encryptservice.EncryptService;
 
 
 @SuppressLint("StaticFieldLeak")
@@ -82,6 +85,11 @@ public class NPayLibrary {
             GetPublickeyTask getPublickeyTask = new GetPublickeyTask(activity);
             getPublickeyTask.execute();
         }
+
+        NPayEncryptDataProvider dataProvider = new NPayEncryptDataProvider();
+
+        // Khởi tạo EncryptService của AAR
+        EncryptService.INSTANCE.initialize(dataProvider);
     }
 
     public boolean isLogOut(SdkConfig sdkConfig) {
@@ -103,6 +111,7 @@ public class NPayLibrary {
     }
 
     public void openSDKWithAction(String actions) {
+        System.out.println("123123123123 " + NPayLibrary.getInstance().walletData(actions));
         Intent intent = new Intent(activity, NPayActivity.class);
         intent.putExtra("data", NPayLibrary.getInstance().walletData(actions));
         activity.startActivity(intent);
